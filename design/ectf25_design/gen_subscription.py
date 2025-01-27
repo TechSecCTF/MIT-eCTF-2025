@@ -11,9 +11,11 @@ Copyright: Copyright (c) 2025 The MITRE Corporation
 """
 
 import argparse
+import ectf25_design.cryptosystem as cryptosystem
 import json
 from pathlib import Path
 import struct
+import time
 
 from loguru import logger
 
@@ -31,19 +33,43 @@ def gen_subscription(
     :param end: Last timestamp the subscription is valid for
     :param channel: Channel to enable
     """
-    # TODO: Update this function to provide a Decoder with whatever data it needs to
-    #   subscribe to a new channel
-
-    # Load the json of the secrets file
     secrets = json.loads(secrets)
 
-    # You can use secrets generated using `gen_secrets` here like:
-    # secrets["some_secrets"]
-    # Which would return "EXAMPLE" in the reference design.
-    # Please note that the secrets are READ ONLY at this sage!
+    root_key = bytes.fromhex(secrets["root_keys"][str(channel)])
+    shared_key_root = bytes.fromhex(secrets["shared_key_root"])
 
-    # Pack the subscription. This will be sent to the decoder with ectf25.tv.subscribe
-    return struct.pack("<IQQI", device_id, start, end, channel)
+    tree = cryptosystem.Tree(root_key=root_key)
+    subtree = tree.minimal_tree(start, end)
+    subscription = subtree.get_subscription()
+
+    shared_key = cryptosystem.hash(shared_key_root + struct.pack("<I", device_id))[
+        : cryptosystem.KEY_LEN
+    ]
+
+    # TODO: for testing
+    shared_key = bytes(cryptosystem.KEY_LEN)
+
+    nonce = cryptosystem.get_nonce()
+
+    length = (
+        cryptosystem.NONCE_LEN  # Nonce
+        + 4  # Encrypted Update Channel
+        + 8  # Encrypted Update Start
+        + 8  # Encrypted Update End
+        + len(subscription)  # Encrypted Update Subscription
+        + cryptosystem.AUTHTAG_LEN  # AuthTag
+    )
+
+    aad = (
+        b"%S"
+        + struct.pack("<H", length)
+        + struct.pack(f"<{cryptosystem.NONCE_LEN}s", nonce)
+    )
+
+    subscription = struct.pack("<IQQ", channel, start, end) + subscription
+    subscription, tag = cryptosystem.encrypt(shared_key, nonce, subscription, aad)
+
+    return struct.pack(f"{cryptosystem.NONCE_LEN}s", nonce) + tag + subscription
 
 
 def parse_args():
