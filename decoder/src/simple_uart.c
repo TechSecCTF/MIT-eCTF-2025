@@ -54,6 +54,7 @@ int uart_readbyte_raw(void){
  *      a list of return codes.
 */
 int uart_readbyte(void){
+    // Doesn't check for an error. VERY peculiar.
     int data = MXC_UART_ReadCharacter(MXC_UART_GET_UART(CONSOLE_UART));
     return data;
 }

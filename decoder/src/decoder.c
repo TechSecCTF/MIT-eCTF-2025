@@ -22,6 +22,8 @@
 #include "simple_flash.h"
 #include "host_messaging.h"
 
+#include "cryptosystem.h"
+
 #include "simple_uart.h"
 
 /* Code between this #ifdef and the subsequent #endif will
@@ -71,17 +73,52 @@
 #pragma pack(push, 1) // Tells the compiler not to pad the struct members
 // for more information on what struct padding does, see:
 // https://www.gnu.org/software/c-intro-and-ref/manual/html_node/Structure-Layout.html
-typedef struct {
-    channel_id_t channel;
-    timestamp_t timestamp;
-    uint8_t data[FRAME_SIZE];
-} frame_packet_t;
 
 typedef struct {
-    decoder_id_t decoder_id;
-    timestamp_t start_timestamp;
-    timestamp_t end_timestamp;
+    uint8_t bytes[12];
+} nonce_t;
+
+// typedef struct {
+//     uint8_t bytes[16];
+// } aeskey_t;
+
+typedef struct {
+    uint8_t bytes[16];
+} tag_t;
+
+typedef struct {
+    uint8_t len;
+    uint8_t frame_data[FRAME_SIZE];
+} encrypted_frame_t;
+
+typedef struct {
+    msg_header_t header;
     channel_id_t channel;
+    timestamp_t timestamp;
+    nonce_t nonce;
+    tag_t tag;
+    encrypted_frame_t encrypted_frame;
+} frame_packet_t;
+
+// typedef struct {
+//     uint8_t level;
+//     uint64_t index;
+//     aeskey_t key;
+// } node_t;
+
+// typedef struct {
+//     channel_id_t channel;
+//     timestamp_t start;
+//     timestamp_t end;
+//     uint8_t n_keys;
+//     node_t nodes[126];
+// } subscription_t;
+
+typedef struct {
+    msg_header_t header;
+    nonce_t nonce;
+    tag_t tag;
+    subscription_t subscription;
 } subscription_update_packet_t;
 
 typedef struct {
@@ -101,24 +138,23 @@ typedef struct {
  ******************** TYPE DEFINITIONS ********************
  **********************************************************/
 
-typedef struct {
-    bool active;
-    channel_id_t id;
-    timestamp_t start_timestamp;
-    timestamp_t end_timestamp;
-} channel_status_t;
+#pragma pack(push, 1) // Tells the compiler not to pad the struct members
 
 typedef struct {
     uint32_t first_boot; // if set to FLASH_FIRST_BOOT, device has booted before.
     channel_status_t subscribed_channels[MAX_CHANNEL_COUNT];
 } flash_entry_t;
 
+#pragma pack(pop) // Tells the compiler to resume padding struct members
+
 /**********************************************************
  ************************ GLOBALS *************************
  **********************************************************/
 
 // This is used to track decoder subscriptions
-flash_entry_t decoder_status;
+// TODO: move this high in RAM.
+flash_entry_t * decoder_status = (flash_entry_t *)0x20010000;
+// flash_entry_t decoder_status = { 0 };
 
 /**********************************************************
  ******************** REFERENCE FLAG **********************
@@ -147,7 +183,7 @@ int is_subscribed(channel_id_t channel) {
     }
     // Check if the decoder has has a subscription
     for (int i = 0; i < MAX_CHANNEL_COUNT; i++) {
-        if (decoder_status.subscribed_channels[i].id == channel && decoder_status.subscribed_channels[i].active) {
+        if (decoder_status->subscribed_channels[i].channel == channel && decoder_status->subscribed_channels[i].active) {
             return 1;
         }
     }
@@ -186,10 +222,10 @@ int list_channels() {
     resp.n_channels = 0;
 
     for (uint32_t i = 0; i < MAX_CHANNEL_COUNT; i++) {
-        if (decoder_status.subscribed_channels[i].active) {
-            resp.channel_info[resp.n_channels].channel =  decoder_status.subscribed_channels[i].id;
-            resp.channel_info[resp.n_channels].start = decoder_status.subscribed_channels[i].start_timestamp;
-            resp.channel_info[resp.n_channels].end = decoder_status.subscribed_channels[i].end_timestamp;
+        if (decoder_status->subscribed_channels[i].active) {
+            resp.channel_info[resp.n_channels].channel =  decoder_status->subscribed_channels[i].channel;
+            resp.channel_info[resp.n_channels].start = decoder_status->subscribed_channels[i].start;
+            resp.channel_info[resp.n_channels].end = decoder_status->subscribed_channels[i].end;
             resp.n_channels++;
         }
     }
@@ -215,20 +251,48 @@ int list_channels() {
 */
 int update_subscription(pkt_len_t pkt_len, subscription_update_packet_t *update) {
     int i;
+    int ret;
+    Aes ctx;
 
-    if (update->channel == EMERGENCY_CHANNEL) {
-        STATUS_LED_RED();
-        print_error("Failed to update subscription - cannot subscribe to emergency channel\n");
+    aeskey_t key = {0};
+
+    // if (update->channel == EMERGENCY_CHANNEL) {
+    //     STATUS_LED_RED();
+    //     print_error("Failed to update subscription - cannot subscribe to emergency channel\n");
+    //     return -1;
+    // }
+
+    uint8_t * aad = (uint8_t *)update;
+    tag_t * tag = &update->tag;
+    nonce_t * nonce = &update->nonce;
+    uint8_t * cipher = (uint8_t *)&update->subscription;
+    size_t aad_len = sizeof(msg_header_t) + sizeof(nonce_t);
+    if (pkt_len < aad_len + sizeof(tag_t)) {
+        return -1;
+    }
+    size_t len = pkt_len - aad_len - sizeof(tag_t);
+
+    subscription_t subscription = {0};
+    ret = wc_AesGcmSetKey(&ctx, (byte *)&key, 16);
+    if (ret != 0) {
+        print_error("aesgcmsetkey failed\n");
+        return -1;
+    }
+    ret = wc_AesGcmDecrypt(&ctx, (byte *)&subscription, cipher, len, (byte *)nonce, 12, (byte *)tag, 16, aad, aad_len);
+    if (ret != 0) {
+        print_error("aesgcmdecrypt failed\n");
         return -1;
     }
 
     // Find the first empty slot in the subscription array
     for (i = 0; i < MAX_CHANNEL_COUNT; i++) {
-        if (decoder_status.subscribed_channels[i].id == update->channel || !decoder_status.subscribed_channels[i].active) {
-            decoder_status.subscribed_channels[i].active = true;
-            decoder_status.subscribed_channels[i].id = update->channel;
-            decoder_status.subscribed_channels[i].start_timestamp = update->start_timestamp;
-            decoder_status.subscribed_channels[i].end_timestamp = update->end_timestamp;
+        if (decoder_status->subscribed_channels[i].channel == subscription.channel || !decoder_status->subscribed_channels[i].active) {
+            decoder_status->subscribed_channels[i].active = true;
+            decoder_status->subscribed_channels[i].channel = subscription.channel;
+            decoder_status->subscribed_channels[i].start = subscription.start;
+            decoder_status->subscribed_channels[i].end = subscription.end;
+            decoder_status->subscribed_channels[i].n_keys = subscription.n_keys;
+            memcpy((void *)decoder_status->subscribed_channels[i].nodes, subscription.nodes, sizeof(node_t)*subscription.n_keys);
             break;
         }
     }
@@ -241,7 +305,7 @@ int update_subscription(pkt_len_t pkt_len, subscription_update_packet_t *update)
     }
 
     flash_simple_erase_page(FLASH_STATUS_ADDR);
-    flash_simple_write(FLASH_STATUS_ADDR, &decoder_status, sizeof(flash_entry_t));
+    flash_simple_write(FLASH_STATUS_ADDR, &decoder_status, MXC_FLASH_PAGE_SIZE); // TODO only allowing one subscription now
     // Success message with an empty body
     write_packet(SUBSCRIBE_MSG, NULL, 0);
     return 0;
@@ -255,13 +319,30 @@ int update_subscription(pkt_len_t pkt_len, subscription_update_packet_t *update)
  *  @return 0 if successful.  -1 if data is from unsubscribed channel.
 */
 int decode(pkt_len_t pkt_len, frame_packet_t *new_frame) {
+    int ret;
     char output_buf[128] = {0};
     uint16_t frame_size;
     channel_id_t channel;
+    timestamp_t timestamp;
+    subscription_t * subscription;
+    node_t * node;
+    aeskey_t key;
+    Aes ctx;
+
+    encrypted_frame_t frame = {0};
 
     // Frame size is the size of the packet minus the size of non-frame elements
-    frame_size = pkt_len - (sizeof(new_frame->channel) + sizeof(new_frame->timestamp));
-    channel = new_frame->channel;
+    uint8_t * aad = (uint8_t *)new_frame;
+    tag_t * tag = &new_frame->tag;
+    nonce_t * nonce = &new_frame->nonce;
+    uint8_t * cipher = (uint8_t *)&new_frame->encrypted_frame;
+    size_t aad_len = sizeof(msg_header_t) + sizeof(channel_id_t) + sizeof(timestamp_t) + sizeof(nonce_t);
+    if (pkt_len < aad_len + sizeof(tag_t)) {
+        return -1;
+    }
+    size_t len = pkt_len - aad_len - sizeof(tag_t);
+
+    // TODO need special handling for channel 0
 
     // The reference design doesn't use the timestamp, but you may want to in your design
     // timestamp_t timestamp = new_frame->timestamp;
@@ -272,7 +353,33 @@ int decode(pkt_len_t pkt_len, frame_packet_t *new_frame) {
         print_debug("Subscription Valid\n");
         /* The reference design doesn't need any extra work to decode, but your design likely will.
         *  Do any extra decoding here before returning the result to the host. */
-        write_packet(DECODE_MSG, new_frame->data, frame_size);
+        channel = new_frame->channel;
+        timestamp = new_frame->timestamp;
+
+        if (ret = find_subscription(decoder_status->subscribed_channels, channel, timestamp, &subscription)) {
+            return ret;
+        }
+        if (ret = find_node(subscription, timestamp, &node)) {
+            return ret;
+        }
+        if (ret = get_frame_key(node, timestamp, &key)) {
+            return ret;
+        }
+
+        // decrypt
+        ret = wc_AesGcmSetKey(&ctx, (byte *)&key, 16);
+        if (ret != 0) {
+            print_error("aesgcmsetkey failed\n");
+            return -1;
+        }
+
+        ret = wc_AesGcmDecrypt(&ctx, (byte *)&frame, cipher, len, (byte *)nonce, sizeof(nonce_t), (byte *)tag, sizeof(tag_t), aad, aad_len);
+        if (ret != 0) {
+            print_error("aesgcmdecrypt failed\n");
+            return -1;
+        }
+
+        write_packet(DECODE_MSG, &frame.frame_data, frame.len);
         return 0;
     } else {
         STATUS_LED_RED();
@@ -293,29 +400,21 @@ void init() {
     flash_simple_init();
 
     // Read starting flash values into our flash status struct
-    flash_simple_read(FLASH_STATUS_ADDR, &decoder_status, sizeof(flash_entry_t));
-    if (decoder_status.first_boot != FLASH_FIRST_BOOT) {
+    flash_simple_read(FLASH_STATUS_ADDR, decoder_status, MXC_FLASH_PAGE_SIZE); // TODO: update size
+    if (decoder_status->first_boot != FLASH_FIRST_BOOT) {
         /* If this is the first boot of this decoder, mark all channels as unsubscribed.
         *  This data will be persistent across reboots of the decoder. Whenever the decoder
         *  processes a subscription update, this data will be updated.
         */
         print_debug("First boot.  Setting flash...\n");
 
-        decoder_status.first_boot = FLASH_FIRST_BOOT;
-
-        channel_status_t subscription[MAX_CHANNEL_COUNT];
-
-        for (int i = 0; i < MAX_CHANNEL_COUNT; i++){
-            subscription[i].start_timestamp = DEFAULT_CHANNEL_TIMESTAMP;
-            subscription[i].end_timestamp = DEFAULT_CHANNEL_TIMESTAMP;
-            subscription[i].active = false;
-        }
+        decoder_status->first_boot = FLASH_FIRST_BOOT;
 
         // Write the starting channel subscriptions into flash.
-        memcpy(decoder_status.subscribed_channels, subscription, MAX_CHANNEL_COUNT*sizeof(channel_status_t));
+        memset(decoder_status->subscribed_channels, 0, MXC_FLASH_PAGE_SIZE - sizeof(uint32_t)); // TODO: update size
 
         flash_simple_erase_page(FLASH_STATUS_ADDR);
-        flash_simple_write(FLASH_STATUS_ADDR, &decoder_status, sizeof(flash_entry_t));
+        flash_simple_write(FLASH_STATUS_ADDR, decoder_status, MXC_FLASH_PAGE_SIZE); // TODO: update size
     }
 
     // Initialize the uart peripheral to enable serial I/O
@@ -372,7 +471,7 @@ void crypto_example(void) {
 
 int main(void) {
     char output_buf[128] = {0};
-    uint8_t uart_buf[100];
+    uint8_t * uart_buf = (uint8_t *)0x20008000;
     msg_type_t cmd;
     int result;
     uint16_t pkt_len;

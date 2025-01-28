@@ -5,9 +5,11 @@
 # For instructions on how to use this system, see
 # https://analog-devices-msdk.github.io/msdk/USERGUIDE/#build-system
 
-#MXC_OPTIMIZE_CFLAGS = -Og
+MXC_OPTIMIZE_CFLAGS = -Og -g
 # ^ For example, you can uncomment this line to 
 # optimize the project for debugging
+
+PROJ_CFLAGS += -Og -g
 
 # **********************************************************
 
@@ -22,6 +24,32 @@ IPATH+=../deployment
 IPATH+=inc/
 IPATH+=/secrets
 VPATH+=src/
+
+VPATH+=wolfssl/wolfcrypt/src/
+IPATH+=wolfssl/
+
+# Enable ChaCha20Poly1305 in wolfSSL
+# PROJ_CFLAGS += -DHAVE_CHACHA
+# PROJ_CFLAGS += -DHAVE_POLY1305a
+
+# Enable AesGcm in wolfSSL
+PROJ_CFLAGS += -DHAVE_AESGCM
+
+# stuff we get from enabling crypto_example=1
+PROJ_CFLAGS += -DMXC_ASSERT_ENABLE
+PROJ_CFLAGS += -DNO_WOLFSSL_DIR
+PROJ_CFLAGS += -DWOLFSSL_AES_DIRECT
+PROJ_CFLAGS += -DSINGLE_THREADED
+# From https://www.wolfssl.com/documentation/manuals/wolfssl/chapter02.html#building-with-gcc-arm
+PROJ_CFLAGS += -DHAVE_PK_CALLBACKS                                                               
+PROJ_CFLAGS += -DWOLFSSL_USER_IO                                                                 
+PROJ_CFLAGS += -DNO_WRITEV -DTIME_T_NOT_64BIT     
+
+# wolfSSL hardening
+# PROJ_CFLAGS += -DTFM_TIMING_RESISTANT
+# PROJ_CFLAGS += -DECC_TIMING_RESISTANT
+# PROJ_CFLAGS += -DWC_RSA_BLINDING
+
 
 # ****************** eCTF Bootloader *******************
 # DO NOT REMOVE
