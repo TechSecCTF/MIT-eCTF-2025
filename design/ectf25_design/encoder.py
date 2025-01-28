@@ -16,6 +16,8 @@ import struct
 import json
 import time
 
+from ectf25.utils.decoder import *
+
 
 class Encoder:
     def __init__(self, secrets: bytes):
@@ -52,37 +54,38 @@ class Encoder:
 
         :returns: The encoded frame, which will be sent to the Decoder
         """
+        # For the emergency channel, broadcast in plaintext.
         if channel == 0:
-            return struct.pack("<I") + frame
+            return struct.pack("<I", channel) + frame
 
         frame_key = self.trees[channel].frame_key(timestamp)
         nonce = cryptosystem.get_nonce()
 
         length = (
             4  # Channel
-            + +cryptosystem.NONCE_LEN  # Nonce
-            + 8  # Encrypted Frame Timestamp
+            + 8  # Timestamp
+            + cryptosystem.NONCE_LEN  # Nonce
             + 1  # Encrypted Frame Length
             + len(frame)  # Encrypted Frame Data
             + cryptosystem.AUTHTAG_LEN  # AuthTag
         )
 
         aad = b"%D" + struct.pack(
-            f"<HI{cryptosystem.NONCE_LEN}s", length, channel, nonce
+            f"<HIQ{cryptosystem.NONCE_LEN}s", length, channel, timestamp, nonce
         )
-        encrypted_frame = struct.pack(f"<QB", timestamp, len(frame)) + frame
+        encrypted_frame = struct.pack(f"<B", len(frame)) + frame
         encrypted_frame, tag = cryptosystem.encrypt(
             frame_key, nonce, encrypted_frame, aad
         )
 
         return (
-            struct.pack(f"<I{cryptosystem.NONCE_LEN}s", channel, nonce)
+            struct.pack(f"<IQ{cryptosystem.NONCE_LEN}s", channel, timestamp, nonce)
             + tag
             + encrypted_frame
         )
 
 
-def main(bench=False):
+def main(bench_encode=False, bench_decode=False):
     """A test main to one-shot encode a frame
 
     This function is only for your convenience and will not be used in the final design.
@@ -100,23 +103,43 @@ def main(bench=False):
     args = parser.parse_args()
 
     encoder = Encoder(args.secrets_file.read())
-    if not bench:
+    if not bench_encode and not bench_decode:
         print(repr(encoder.encode(args.channel, args.frame.encode(), args.timestamp)))
         return
 
-    import random
+    if bench_encode:
+        import random
 
-    total, N = 0, 10_000
-    for _ in range(N):
-        frame = cryptosystem.random_bytes(64)
-        timestamp = random.randint(0, 2**64 - 1)
-        start = time.time()
-        encoder.encode(1, frame, timestamp)
-        end = time.time()
-        total += end - start
+        total, N = 0, 10_000
+        for _ in range(N):
+            frame = cryptosystem.random_bytes(64)
+            timestamp = random.randint(0, 2**64 - 1)
+            start = time.time()
+            encoder.encode(1, frame, timestamp)
+            end = time.time()
+            total += end - start
 
-    print(f"Time for {N} encodings: {total}sec\n  aka {N/total} frames/sec")
+        print(f"Time for {N} encodings: {total}sec\n  aka {N/total} frames/sec")
+
+    if bench_decode:
+        import random
+
+        decoder = DecoderIntf("/dev/ttyACM0")
+        total, maximum, N = 0, 0, 1_000
+        for _ in range(N):
+            frame = cryptosystem.random_bytes(64)
+            timestamp = random.randint(0, 2**64 - 1)
+            enc_frame = encoder.encode(args.channel, frame, timestamp)
+            start = time.time()
+            dec_frame = decoder.decode(enc_frame)
+            end = time.time()
+            maximum = end - start if end - start > maximum else maximum
+            assert frame == dec_frame and enc_frame != dec_frame
+            total += end - start
+        print(
+            f"Time for {N} decodes: {total}sec\n  aka {N/total} frames/sec\n  max_time: {maximum} sec"
+        )
 
 
 if __name__ == "__main__":
-    main(True)
+    main()
