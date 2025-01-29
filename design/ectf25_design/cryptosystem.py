@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 import hashlib
 import os
 import random
@@ -33,17 +34,28 @@ right_hash = lambda m: split_hash(m)[1] if m is not None else None
 def random_bytes(n):
     return os.urandom(n)
 
+
 def gen_root_key() -> bytes:
     return random_bytes(KEY_LEN)
 
+
 def get_nonce() -> bytes:
     return random_bytes(NONCE_LEN)
+
 
 def encrypt(key, nonce, data, aad):
     cipher = ENCRYPTION_ALG(key)
     ciphertext = cipher.encrypt(nonce, data, aad)
     ciphertext, tag = ciphertext[:-AUTHTAG_LEN], ciphertext[-AUTHTAG_LEN:]
     return ciphertext, tag
+
+
+def sign(data):
+    # TODO: null privkey for testing ;)
+    priv_key = Ed25519PrivateKey.from_private_bytes(bytes(32))
+    signature = priv_key.sign(data)
+    return signature
+
 
 class Tree:
     """
