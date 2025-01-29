@@ -92,12 +92,22 @@ typedef struct {
 } encrypted_frame_t;
 
 typedef struct {
+    uint8_t bytes[64];
+} signature_t;
+
+typedef struct {
     msg_header_t header;
     channel_id_t channel;
     timestamp_t timestamp;
     nonce_t nonce;
     tag_t tag;
-    encrypted_frame_t encrypted_frame;
+    union {
+        struct {
+            encrypted_frame_t encrypted_frame;
+            signature_t signature;
+        };
+        uint8_t rawBytes[sizeof(encrypted_frame_t) + sizeof(signature_t)];
+    };
 } frame_packet_t;
 
 // typedef struct {
@@ -155,6 +165,10 @@ typedef struct {
 // TODO: move this high in RAM.
 flash_entry_t * decoder_status = (flash_entry_t *)0x20010000;
 // flash_entry_t decoder_status = { 0 };
+
+// TODO: pubkey corresponding to null privkey, for testing :)
+static uint8_t sk_bytes[32] = { 0x3b,0x6a,0x27,0xbc,0xce,0xb6,0xa4,0x2d,0x62,0xa3,0xa8,0xd0,0x2a,0x6f,0x0d,0x73,0x65,0x32,0x15,0x77,0x1d,0xe2,0x43,0xa6,0x3a,0xc0,0x48,0xa1,0x8b,0x59,0xda,0x29 };
+static ed25519_key signing_key = { 0 };
 
 /**********************************************************
  ******************** REFERENCE FLAG **********************
@@ -319,13 +333,14 @@ int update_subscription(pkt_len_t pkt_len, subscription_update_packet_t *update)
  *  @return 0 if successful.  -1 if data is from unsubscribed channel.
 */
 int decode(pkt_len_t pkt_len, frame_packet_t *new_frame) {
-    int ret;
+    int ret, verified;
     char output_buf[128] = {0};
     uint16_t frame_size;
     channel_id_t channel;
     timestamp_t timestamp;
     subscription_t * subscription;
     node_t * node;
+    signature_t * signature;
     aeskey_t key;
     Aes ctx;
 
@@ -337,10 +352,22 @@ int decode(pkt_len_t pkt_len, frame_packet_t *new_frame) {
     nonce_t * nonce = &new_frame->nonce;
     uint8_t * cipher = (uint8_t *)&new_frame->encrypted_frame;
     size_t aad_len = sizeof(msg_header_t) + sizeof(channel_id_t) + sizeof(timestamp_t) + sizeof(nonce_t);
-    if (pkt_len < aad_len + sizeof(tag_t)) {
+    if (pkt_len < aad_len + sizeof(tag_t) + sizeof(signature_t)) {
         return -1;
     }
-    size_t len = pkt_len - aad_len - sizeof(tag_t);
+    size_t len = pkt_len - aad_len - sizeof(tag_t) - sizeof(signature_t);
+    signature = (signature_t *)&new_frame->rawBytes[len];
+
+    // Check signature
+    ret = wc_ed25519_verify_msg((byte *)signature, sizeof(signature_t), (byte *)new_frame, pkt_len - sizeof(signature_t), &verified, &signing_key);
+    if (ret != 0) {
+        print_debug("error verifying\n");
+        return -1;
+    }
+    if (verified == 0) {
+        print_debug("invalid signature\n");
+        return -1;
+    }
 
     // TODO need special handling for channel 0
 
@@ -415,6 +442,14 @@ void init() {
 
         flash_simple_erase_page(FLASH_STATUS_ADDR);
         flash_simple_write(FLASH_STATUS_ADDR, decoder_status, MXC_FLASH_PAGE_SIZE); // TODO: update size
+    }
+
+    // Init signature
+    wc_ed25519_init(&signing_key);
+    ret = wc_ed25519_import_public(sk_bytes, 32, &signing_key);
+    if (ret != 0) {
+        STATUS_LED_ERROR();
+        while (1);
     }
 
     // Initialize the uart peripheral to enable serial I/O

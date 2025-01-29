@@ -34,6 +34,8 @@ IPATH+=wolfssl/
 
 # Enable AesGcm in wolfSSL
 PROJ_CFLAGS += -DHAVE_AESGCM
+PROJ_CFLAGS += -DHAVE_ED25519
+PROJ_CFLAGS += -DWOLFSSL_SHA512
 
 # stuff we get from enabling crypto_example=1
 PROJ_CFLAGS += -DMXC_ASSERT_ENABLE

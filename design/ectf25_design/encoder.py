@@ -68,21 +68,26 @@ class Encoder:
             + 1  # Encrypted Frame Length
             + len(frame)  # Encrypted Frame Data
             + cryptosystem.AUTHTAG_LEN  # AuthTag
+            + 64  # signature
         )
 
-        aad = b"%D" + struct.pack(
-            f"<HIQ{cryptosystem.NONCE_LEN}s", length, channel, timestamp, nonce
+        packet_prefix = b"%D" + struct.pack("<H", length)
+
+        aad = packet_prefix + struct.pack(
+            f"<IQ{cryptosystem.NONCE_LEN}s", channel, timestamp, nonce
         )
         encrypted_frame = struct.pack(f"<B", len(frame)) + frame
         encrypted_frame, tag = cryptosystem.encrypt(
             frame_key, nonce, encrypted_frame, aad
         )
 
-        return (
+        packet = (
             struct.pack(f"<IQ{cryptosystem.NONCE_LEN}s", channel, timestamp, nonce)
             + tag
             + encrypted_frame
         )
+
+        return packet + cryptosystem.sign(packet_prefix + packet)
 
 
 def main(bench_encode=False, bench_decode=False):
@@ -142,4 +147,4 @@ def main(bench_encode=False, bench_decode=False):
 
 
 if __name__ == "__main__":
-    main()
+    main(False, True)

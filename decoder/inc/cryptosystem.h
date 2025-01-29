@@ -6,6 +6,7 @@
 #include "wolfssl/wolfcrypt/aes.h"
 #include "wolfssl/wolfcrypt/hash.h"
 #include "wolfssl/wolfcrypt/sha256.h"
+#include "wolfssl/wolfcrypt/ed25519.h"
 
 #define MAX_CHANNEL_COUNT 8
 #define TREE_DEPTH sizeof(timestamp_t) * 8
