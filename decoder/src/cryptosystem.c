@@ -10,11 +10,11 @@ int find_subscription(channel_status_t * subscriptions, channel_id_t channel, ti
         curr = &subscriptions[i];
         if ((curr->channel == channel && curr->start <= timestamp && timestamp <= curr->end)) {
             *subscription = (subscription_t *)((void *)curr + 1);
-            break;
+            return 0;
         }
     }
 
-    return (i != MAX_CHANNEL_COUNT) ? 0 : -1;
+    return -1;
 }
 
 int find_node(subscription_t * subscription, timestamp_t timestamp, node_t ** node) {
@@ -55,13 +55,12 @@ int get_frame_key(node_t * node, timestamp_t timestamp, aeskey_t * key) {
         // Decide to go left or right...
         start = curr->index << (TREE_DEPTH - curr->level);
         end = ((curr->index + 1) << (TREE_DEPTH - curr->level)) - 1;
+        curr->level += 1;
         // If timestamp is closer to start, descend left
         if (timestamp - start < end - timestamp) {
-            curr->level += 1;
             curr->index = 2 * curr->index;
             memcpy(&curr->key, digest.left, 16);
         } else {
-            curr->level += 1;
             curr->index = (2 * curr->index) + 1;
             memcpy(&curr->key, digest.right, 16);
         }
