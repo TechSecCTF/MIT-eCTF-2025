@@ -13,7 +13,6 @@ sys.setrecursionlimit(100_000)
 
 ENCRYPTION_ALG = AESGCM
 HASH_ALG = hashlib.sha256
-HASH_LEN = 32
 KEY_LEN = 16
 NONCE_LEN = 12
 AUTHTAG_LEN = 16
