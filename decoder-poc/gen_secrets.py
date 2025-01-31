@@ -11,13 +11,14 @@ with open(sys.argv[1], "r") as f:
 channels = secrets["channels"]
 
 secrets_h = f"""
+#define NUM_CHANNELS {len(channels)}
 extern int channels[{len(channels)}];
 """
 
 secrets_c = f"""
 #include "secrets.h"
 
-int channels[{len(channels)}] = {gen_int_arr(channels)};
+int channels[NUM_CHANNELS] = {gen_int_arr(channels)};
 """
 
 src = Path(__file__).parent / "src"

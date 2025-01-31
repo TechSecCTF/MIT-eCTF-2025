@@ -2,9 +2,9 @@ CC = gcc
 CFLAGS = -Wall -Wextra $(shell pkg-config --cflags wolfssl)
 LDFLAGS = $(shell pkg-config --libs wolfssl)
 
-SRC = src/main.c src/secrets.c
+SRC = src/main.c src/secrets.c src/cryptosystem.c
 OBJ = $(SRC:.c=.o)
-DEPS = src/secrets.h
+DEPS = src/secrets.h src/cryptosystem.h
 
 TARGET = decoder
 
