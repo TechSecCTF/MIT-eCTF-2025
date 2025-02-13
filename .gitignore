@@ -338,8 +338,6 @@ msdk/
 *.secrets
 *.subscription
 
-decoder-poc/decoder
-
 # Secrets
 secrets/
 decoder-poc/secrets.json
