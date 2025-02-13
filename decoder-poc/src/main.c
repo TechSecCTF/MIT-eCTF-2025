@@ -11,7 +11,14 @@
 
 int main(void) {
   wolfSSL_Debugging_ON();
-  
+  if (wolfCrypt_Init() != 0) {
+    WOLFSSL_MSG("wolfCrypt_Init() error");
+  }
 
+  printf("Hello, world!\n");
+
+  if (wolfCrypt_Cleanup() != 0) {
+    WOLFSSL_MSG("wolfCrypt_Cleanup() error");
+  }
   return 0;
 }
