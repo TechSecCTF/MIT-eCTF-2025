@@ -21,7 +21,7 @@ MFLOAT_ABI=soft
 IPATH+=../deployment
 IPATH+=inc/
 IPATH+=/secrets
-VPATH+=src/
+VPATH+=src/  
 
 # ****************** eCTF Bootloader *******************
 # DO NOT REMOVE
@@ -29,14 +29,15 @@ LINKERFILE=firmware.ld
 STARTUPFILE=startup_firmware.S
 ENTRY=firmware_startup
 
-# ****************** eCTF Crypto Example *******************
-# Uncomment the commented lines below and comment the disable
-# lines to enable the eCTF Crypto Example.
-# WolfSSL must be included in this directory as wolfssl/
-# WolfSSL can be downloaded from: https://www.wolfssl.com/download/
-
-# Disable Crypto Example
-CRYPTO_EXAMPLE=0
-
-# Enable Crypto Example
-#CRYPTO_EXAMPLE=1
+# ****************** Crypto Example Flags **************
+#VPATH += wolfssl/wolfcrypt/src
+#IPATH += wolfssl
+# PROJ_CFLAGS += -DMXC_ASSERT_ENABLE
+# # eCTF Crypto Example - WolfSSL Flags
+# PROJ_CFLAGS += -DNO_WOLFSSL_DIR
+# PROJ_CFLAGS += -DWOLFSSL_AES_DIRECT
+# PROJ_CFLAGS += -DSINGLE_THREADED
+# # From https://www.wolfssl.com/documentation/manuals/wolfssl/chapter02.html#building-with-gcc-arm
+# PROJ_CFLAGS += -DHAVE_PK_CALLBACKS                                                               
+# PROJ_CFLAGS += -DWOLFSSL_USER_IO                                                                 
+# PROJ_CFLAGS += -DNO_WRITEV -DTIME_T_NOT_64BIT 
