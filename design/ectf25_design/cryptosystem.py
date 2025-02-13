@@ -4,6 +4,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 import hashlib
 import os
+import json
 import random
 import struct
 import sys
@@ -41,6 +42,34 @@ def gen_root_key() -> bytes:
 
 def get_nonce() -> bytes:
     return random_bytes(NONCE_LEN)
+
+
+class Secrets:
+    __slots__ = ("channels", "channel_keys", "shared_key_root")
+    channels: list
+    channel_keys: dict[str, bytes]
+    shared_key_root: bytes
+
+    def __init__(self, channels, channel_keys, shared_key_root):
+        self.channels = channels
+        self.channel_keys = channel_keys
+        self.shared_key_root = shared_key_root
+    
+    @classmethod
+    def parse(cls, data):
+        data = json.loads(data)
+        channels = data["channels"]
+        channel_keys = {int(k): bytes.fromhex(v) for k, v in data["root_keys"].items()}
+        shared_key_root = bytes.fromhex(data["shared_key_root"])
+        return cls(
+            channels=channels, channel_keys=channel_keys, shared_key_root=shared_key_root
+        )
+    
+    def root_key(self, channel_id):
+        return self.channel_keys[channel_id]
+    
+    def get_tree(self, channel_id):
+        return Tree(root_key=self.root_key(channel_id))
 
 
 def encrypt(key, nonce, data, aad):

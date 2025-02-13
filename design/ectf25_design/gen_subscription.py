@@ -11,7 +11,7 @@ Copyright: Copyright (c) 2025 The MITRE Corporation
 """
 
 import argparse
-import ectf25_design.cryptosystem as cryptosystem
+from ectf25_design import cryptosystem
 import json
 from pathlib import Path
 import struct
@@ -33,16 +33,13 @@ def gen_subscription(
     :param end: Last timestamp the subscription is valid for
     :param channel: Channel to enable
     """
-    secrets = json.loads(secrets)
+    secrets = cryptosystem.Secrets.parse(secrets)
+    tree = secrets.get_tree(channel)
 
-    root_key = bytes.fromhex(secrets["root_keys"][str(channel)])
-    shared_key_root = bytes.fromhex(secrets["shared_key_root"])
-
-    tree = cryptosystem.Tree(root_key=root_key)
     subtree = tree.minimal_tree(start, end)
     subscription = subtree.get_subscription()
 
-    shared_key = cryptosystem.hash(shared_key_root + struct.pack("<I", device_id))[
+    shared_key = cryptosystem.hash(secrets.shared_key_root + struct.pack("<I", device_id))[
         : cryptosystem.KEY_LEN
     ]
 
