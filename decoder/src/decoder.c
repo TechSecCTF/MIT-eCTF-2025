@@ -277,6 +277,14 @@ int decode(pkt_len_t pkt_len, frame_packet_t *new_frame) {
 void init() {
     int ret;
 
+    // Free speed boost by using the 100MHz Internal Primary Oscillator
+    // src: msdk-2024_02/Libraries/PeriphDrivers/Source/SYS/sys_me17.c
+    ret = MXC_SYS_Clock_Select(MXC_SYS_CLOCK_IPO);
+    if (ret != 0) {
+        STATUS_LED_ERROR();
+        while (1);
+    }
+
     // Initialize the flash peripheral to enable access to persistent memory
     flash_simple_init();
 
