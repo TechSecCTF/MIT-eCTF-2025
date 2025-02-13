@@ -16,8 +16,8 @@ $(TARGET): $(OBJ)
 src/%.o: src/%.c $(DEPS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-src/secrets.c src/secrets.h: gen_secrets.py secrets.json
-	python ./gen_secrets.py secrets.json
+src/secrets.c src/secrets.h: gen_secret_sources.py secrets.json
+	python gen_secret_sources.py secrets.json
 
 clean:
 	rm -f $(OBJ) $(TARGET)
