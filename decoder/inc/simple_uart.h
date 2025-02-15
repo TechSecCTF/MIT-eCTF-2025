@@ -20,7 +20,7 @@
 #include <string.h>
 #include "uart.h"
 #include "nvic_table.h"
-#include "host_messaging.h"
+#include "messaging.h"
 
 /******************************** MACRO DEFINITIONS ********************************/
 #define UART_BAUD 115200
