@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include <ctype.h>
 #include <string.h>
-#include <wolfssl/wolfcrypt/hash.h>
-#include <wolfssl/wolfcrypt/logging.h>
+#include "wolfssl/wolfcrypt/hash.h"
+#include "wolfssl/wolfcrypt/logging.h"
 
 #include "cryptosystem.h"
 #include "secrets.h"
