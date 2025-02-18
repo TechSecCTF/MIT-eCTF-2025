@@ -126,10 +126,11 @@ def main(bench_encode=False, bench_decode=False):
         import random
 
         decoder = DecoderIntf("/dev/ttyACM0")
-        total, maximum, N = 0, 0, 1_000
+        total, maximum, N = 0, 0, 100
+        timestamp = random.randint(0, 2**64 - 1)
         for _ in range(N):
             frame = cryptosystem.random_bytes(64)
-            timestamp = random.randint(0, 2**64 - 1)
+            timestamp += 1
             enc_frame = encoder.encode(args.channel, frame, timestamp)
             start = time.time()
             dec_frame = decoder.decode(enc_frame)
