@@ -55,18 +55,20 @@ def gen_subscription(
         + 8  # Encrypted Update End
         + len(subscription)  # Encrypted Update Subscription
         + cryptosystem.AUTHTAG_LEN  # AuthTag
+        + cryptosystem.SIG_LEN # Signature
     )
 
-    aad = (
-        b"%S"
-        + struct.pack("<H", length)
-        + struct.pack(f"<{cryptosystem.NONCE_LEN}s", nonce)
-    )
+    header = b"%S" + struct.pack("<H", length)
+    aad = header + struct.pack(f"<{cryptosystem.NONCE_LEN}s", nonce)
 
     subscription = struct.pack("<IQQ", channel, start, end) + subscription
     subscription, tag = cryptosystem.encrypt(shared_key, nonce, subscription, aad)
 
-    return struct.pack(f"{cryptosystem.NONCE_LEN}s", nonce) + tag + subscription
+    header = b"%S" + struct.pack("<H", length)
+    body = struct.pack(f"{cryptosystem.NONCE_LEN}s", nonce) + tag + subscription
+    signature = cryptosystem.sign(header + body)
+
+    return body + signature
 
 
 def parse_args():

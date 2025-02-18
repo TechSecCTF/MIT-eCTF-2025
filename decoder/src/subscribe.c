@@ -1,4 +1,6 @@
 #include "subscribe.h"
+#include "decrypt.h"
+#include "verify.h"
 
 subscription_t * subscriptions[NUM_MAX_SUBSCRIPTIONS] = {
     (subscription_t *)SUB1,
@@ -43,29 +45,28 @@ subscription_t * find_subscription(uint32_t channel, bool empty_ok) {
  */
 void subscribe(packet_t * packet, uint16_t len) {
     // Validate the packet
-    // signature_offset = read - sizeof(signature_t);
-    // signature = (signature_t *)&packet.rawBytes[signature_offset]
-    // ed25519_verify(packet, signature_offset, signature)
+    if (verify_packet(packet, len) != 0)  {
+        send_error();
+        return;
+    }
 
     // Decrypt into buffer
-    // encrypted_subscription * enc_sub = &packet.body;
-    // subscription_t sub = {0};
-    // decrypt(&sub, enc_sub->body, enc_sub->nonce, enc_sub->aad)
-
-    subscription_t sub = {0};
-    memcpy(sub.rawBytes, packet->body, len);
+    uint16_t sub_len = 0;
+    subscription_t * sub = decrypt_subscription(packet, len, &sub_len);
 
     // Sanity checks
-    if (sub.channel == 0)
-      send_error();
+    if (sub->channel == 0) {
+        send_error();
+        return;
+    }
 
     // Find appropriate buf to copy into
-    subscription_t * slot = find_subscription(sub.channel, true);
+    subscription_t * slot = find_subscription(sub->channel, true);
 
     if (slot != NULL) {
         // Erase the appropriate page
         flash_simple_erase_page((uint32_t)slot);
-        flash_simple_write((uint32_t)slot, sub.rawBytes, sizeof(subscription_t));
+        flash_simple_write((uint32_t)slot, sub->rawBytes, sub_len);
 
         send_header(OPCODE_SUBSCRIBE, 0);
         return;

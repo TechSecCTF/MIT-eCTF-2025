@@ -13,6 +13,7 @@
 #include "list_cmd.h"
 #include "subscribe.h"
 #include "decode.h"
+#include "verify.h"
 
 #include "led.h"
 #define STATUS_LED_OFF(void) LED_Off(LED1); LED_Off(LED2); LED_Off(LED3);
@@ -57,8 +58,13 @@ void init(void) {
     // Clear subscription pages on first boot
     clear_subscription_pages();
 
+    // Initialize signing key
+    if (init_signing_key() < 0) panic();
+
     // Initialize the uart peripheral to enable serial I/O
     if (uart_init() < 0) panic();
+
+    
 }
 
 int main(void) {

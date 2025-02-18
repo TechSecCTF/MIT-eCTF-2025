@@ -62,7 +62,6 @@ class Encoder:
             4  # Channel
             + 8  # Timestamp
             + cryptosystem.NONCE_LEN  # Nonce
-            + 1  # Encrypted Frame Length
             + len(frame)  # Encrypted Frame Data
             + cryptosystem.AUTHTAG_LEN  # AuthTag
             + 64  # signature
@@ -73,7 +72,7 @@ class Encoder:
         aad = packet_prefix + struct.pack(
             f"<IQ{cryptosystem.NONCE_LEN}s", channel, timestamp, nonce
         )
-        encrypted_frame = struct.pack(f"<B", len(frame)) + frame
+        encrypted_frame = frame
         encrypted_frame, tag = cryptosystem.encrypt(
             frame_key, nonce, encrypted_frame, aad
         )

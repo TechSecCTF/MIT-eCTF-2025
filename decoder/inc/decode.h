@@ -12,17 +12,12 @@
 
 typedef struct {
     bool active;
-    uint32_t channel;
-    uint64_t timestamp;
+    channel_id_t channel;
+    timestamp_t timestamp;
 } last_timestamp_t;
 
 typedef union {
-    struct {
-        uint32_t channel;
-        uint64_t timestamp;
-        uint8_t data[MAX_FRAME_SIZE];
-    };
-    uint8_t rawBytes[sizeof(uint32_t) + sizeof(uint64_t) + MAX_FRAME_SIZE];
+    uint8_t data[MAX_FRAME_SIZE];
 } frame_t;
 
 #pragma pack(pop)

@@ -29,15 +29,32 @@ LINKERFILE=firmware.ld
 STARTUPFILE=startup_firmware.S
 ENTRY=firmware_startup
 
-# ****************** Crypto Example Flags **************
-#VPATH += wolfssl/wolfcrypt/src
-#IPATH += wolfssl
-# PROJ_CFLAGS += -DMXC_ASSERT_ENABLE
-# # eCTF Crypto Example - WolfSSL Flags
-# PROJ_CFLAGS += -DNO_WOLFSSL_DIR
-# PROJ_CFLAGS += -DWOLFSSL_AES_DIRECT
-# PROJ_CFLAGS += -DSINGLE_THREADED
-# # From https://www.wolfssl.com/documentation/manuals/wolfssl/chapter02.html#building-with-gcc-arm
-# PROJ_CFLAGS += -DHAVE_PK_CALLBACKS                                                               
-# PROJ_CFLAGS += -DWOLFSSL_USER_IO                                                                 
-# PROJ_CFLAGS += -DNO_WRITEV -DTIME_T_NOT_64BIT 
+# ****************** Integration **************
+
+PROJ_CFLAGS += -I../decoder-poc/src
+SRCS += ../decoder-poc/src/cryptosystem.c
+
+# ****************** wolfSSL *******************
+VPATH += ../wolfssl/wolfcrypt/src
+IPATH += ../wolfssl
+
+# Include our necessary features
+PROJ_CFLAGS += -DHAVE_AESGCM
+PROJ_CFLAGS += -DHAVE_ED25519
+PROJ_CFLAGS += -DWOLFSSL_SHA512
+
+# Basics
+PROJ_CFLAGS += -DMXC_ASSERT_ENABLE
+PROJ_CFLAGS += -DWOLFSSL_NO_OPTIONS_H
+PROJ_CFLAGS += -DNO_WOLFSSL_DIR
+PROJ_CFLAGS += -DWOLFSSL_AES_DIRECT
+PROJ_CFLAGS += -DSINGLE_THREADED
+# From https://www.wolfssl.com/documentation/manuals/wolfssl/chapter02.html#building-with-gcc-arm
+PROJ_CFLAGS += -DHAVE_PK_CALLBACKS
+PROJ_CFLAGS += -DWOLFSSL_USER_IO
+PROJ_CFLAGS += -DNO_WRITEV -DTIME_T_NOT_64BIT
+
+# Hardening
+PROJ_CFLAGS += -DTFM_TIMING_RESISTANT
+PROJ_CFLAGS += -DECC_TIMING_RESISTANT
+PROJ_CFLAGS += -DWC_RSA_BLINDING
