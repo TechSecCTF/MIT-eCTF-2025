@@ -49,8 +49,8 @@ int derive_node_subkey(const kdf_node_t *parent, timestamp_t ts, aeskey_t *out_k
     }
 
     // Decide to go left or right...
-    int start = curr.index << (KDF_TREE_DEPTH - curr.level);
-    int end = ((curr.index + 1) << (KDF_TREE_DEPTH - curr.level)) - 1;
+    timestamp_t start = curr.index << (KDF_TREE_DEPTH - curr.level);
+    timestamp_t end = ((curr.index + 1) << (KDF_TREE_DEPTH - curr.level)) - 1;
     curr.level += 1;
     // If timestamp is closer to start, descend left
     if (ts - start < end - ts) {
