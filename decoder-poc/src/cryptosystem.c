@@ -6,11 +6,13 @@ int calc_kdf_digest(const byte *in, word32 len, digest_t *digest) {
   return wc_Sha256Hash(in, len, (byte*) &digest->rawDigest);
 }
 
+#ifdef _DECODER_POC
+
 void init_pool(SubscriptionPool *pool) {
   memset(pool, 0, sizeof(*pool));
 }
 
-ChannelSubscription *find_subscription(SubscriptionPool *pool, channel_id_t channel) {
+subscription_t *find_subscription(SubscriptionPool *pool, channel_id_t channel) {
   for (int i = 0; i < NUM_CHANNELS; i++) {
     if (!pool->active[i]) continue;
     if (pool->subs[i].channel == channel) return &pool->subs[i];
@@ -18,8 +20,10 @@ ChannelSubscription *find_subscription(SubscriptionPool *pool, channel_id_t chan
   return NULL;
 }
 
+#endif
+
 // find which node within our subscription is a parent of ts
-kdf_node_t *find_ts_parent(ChannelSubscription *sub, timestamp_t ts) {
+kdf_node_t *find_ts_parent(subscription_t *sub, timestamp_t ts) {
   kdf_node_t *node;
   timestamp_t start, end;
 

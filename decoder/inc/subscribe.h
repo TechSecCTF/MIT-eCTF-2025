@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "simple_flash.h"
 #include "messaging.h"
+#include "cryptosystem.h"
 
 #define NUM_MAX_SUBSCRIPTIONS 8
 
@@ -18,16 +19,6 @@
 #define SUB8 (SUB_FLASH_START + (7 * MXC_FLASH_PAGE_SIZE))
 
 #pragma pack(push, 1)
-
-typedef union {
-    struct {
-        uint32_t decoder_id;
-        uint64_t start;
-        uint64_t end;
-        uint32_t channel;
-    };
-    uint8_t rawBytes[BODY_LEN];
-} subscription_t;
 
 #pragma pack(pop)
 

@@ -51,14 +51,14 @@ int main(int argc, char *argv[]) {
   size_t sub_len = sizeof(subscription);
   hex_to_bytes(argv[2], subscription, &sub_len);
   printf("We got a %zu byte subscription\n", sub_len);
-  if (sub_len > sizeof(ChannelSubscription)) {
+  if (sub_len > sizeof(subscription_t)) {
     fprintf(stderr, "error: subscription too long\n");
     return 1;
   }
 
   SubscriptionPool pool;
   init_pool(&pool);
-  memcpy(&pool.subs[channel], subscription, sizeof(ChannelSubscription));
+  memcpy(&pool.subs[channel], subscription, sizeof(subscription_t));
   pool.active[channel] = true;
 
   timestamp_t ts = 0;
