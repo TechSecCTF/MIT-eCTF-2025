@@ -1,5 +1,5 @@
 #include "cryptosystem.h"
-#include <wolfssl/wolfcrypt/hash.h>
+#include "wolfssl/wolfcrypt/hash.h"
 #include <string.h>
 #include <assert.h>
 

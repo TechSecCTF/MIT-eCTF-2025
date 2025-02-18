@@ -1,8 +1,11 @@
 CC = gcc
-CFLAGS = -Wall -Wextra $(shell pkg-config --cflags wolfssl)
-LDFLAGS = $(shell pkg-config --libs wolfssl)
+CFLAGS = -Wall -Wextra -I../wolfssl
 
-SRC = src/main.c src/secrets.c src/cryptosystem.c
+WOLFCRYPT_SRC = ../wolfssl/wolfcrypt/src
+WOLFCRYPT_FILES = sha.c sha256.c logging.c wc_port.c md5.c hash.c memory.c
+
+SRC = src/main.c src/secrets.c src/cryptosystem.c \
+      $(addprefix $(WOLFCRYPT_SRC)/, $(WOLFCRYPT_FILES))
 OBJ = $(SRC:.c=.o)
 DEPS = src/secrets.h src/cryptosystem.h
 
