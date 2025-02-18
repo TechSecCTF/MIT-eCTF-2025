@@ -11,7 +11,7 @@ typedef uint32_t channel_id_t;
 // ...therefore depth = bitcount of the type
 #define KDF_TREE_DEPTH sizeof(timestamp_t) * 8
 // worst case = 2 nodes per level, minus the top level
-#define SUBCRTIPION_MAX_NODES 2 * KDF_TREE_DEPTH - 2
+#define SUBSCRIPTION_MAX_NODES 2 * KDF_TREE_DEPTH - 2
 
 #pragma pack(push, 1)
 
@@ -45,9 +45,9 @@ typedef union
     timestamp_t start;
     timestamp_t end;
     uint8_t n_nodes;
-    kdf_node_t nodes[SUBCRTIPION_MAX_NODES];
+    kdf_node_t nodes[SUBSCRIPTION_MAX_NODES];
   };
-  uint8_t rawBytes[sizeof(channel_id_t) + sizeof(timestamp_t) + sizeof(timestamp_t) + sizeof(uint8_t) + sizeof(kdf_node_t) * 126];
+  uint8_t rawBytes[sizeof(channel_id_t) + sizeof(timestamp_t) + sizeof(timestamp_t) + sizeof(uint8_t) + sizeof(kdf_node_t) * SUBSCRIPTION_MAX_NODES];
 } ChannelSubscription;
 
 typedef struct subscription_pool

@@ -1,7 +1,6 @@
 #include "cryptosystem.h"
 #include "wolfssl/wolfcrypt/hash.h"
 #include <string.h>
-#include <assert.h>
 
 int calc_kdf_digest(const byte *in, word32 len, digest_t *digest) {
   return wc_Sha256Hash(in, len, (byte*) &digest->rawDigest);
@@ -24,15 +23,15 @@ kdf_node_t *find_ts_parent(ChannelSubscription *sub, timestamp_t ts) {
   kdf_node_t *node;
   timestamp_t start, end;
 
-  assert(sub->n_nodes <= SUBCRTIPION_MAX_NODES);
-  for (int i = 0; i < sub->n_nodes; i++) {
-    node = &sub->nodes[i];
-    start = node->index << (KDF_TREE_DEPTH - node->level);
-    if (ts < start) continue;
-    end = ((node->index + 1) << (KDF_TREE_DEPTH - node->level)) - 1;
-    // TODO: verify that [start, end] should be a closed range
-    if (ts > end) continue;
-    return node;
+  if (sub->n_nodes <= SUBSCRIPTION_MAX_NODES) {
+    for (int i = 0; i < sub->n_nodes; i++) {
+      node = &sub->nodes[i];
+      start = node->index << (KDF_TREE_DEPTH - node->level);
+      if (ts < start) continue;
+      end = ((node->index + 1) << (KDF_TREE_DEPTH - node->level)) - 1;
+      if (ts > end) continue;
+      return node;
+    }
   }
   return NULL;
 }
