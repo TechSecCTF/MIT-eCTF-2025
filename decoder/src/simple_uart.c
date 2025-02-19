@@ -17,7 +17,7 @@
 #include <string.h>
 #include "uart.h"
 #include "nvic_table.h"
-#include "host_messaging.h"
+#include "messaging.h"
 #include "board.h"
 #include "mxc_device.h"
 
@@ -31,7 +31,6 @@ int uart_init(void){
     int ret;
 
     if ((ret = MXC_UART_Init(MXC_UART_GET_UART(CONSOLE_UART), UART_BAUD, MXC_UART_IBRO_CLK)) != E_NO_ERROR) {
-        printf("Error initializing UART: %d\n", ret);
         return ret;
     }
 
