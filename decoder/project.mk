@@ -58,3 +58,9 @@ PROJ_CFLAGS += -DNO_WRITEV -DTIME_T_NOT_64BIT
 PROJ_CFLAGS += -DTFM_TIMING_RESISTANT
 PROJ_CFLAGS += -DECC_TIMING_RESISTANT
 PROJ_CFLAGS += -DWC_RSA_BLINDING
+
+# **************** Secrets for Decoder ****************
+gen-decoder-secrets:
+	python gen_decoder_secrets.py $(DECODER_ID)
+
+release: gen-decoder-secrets

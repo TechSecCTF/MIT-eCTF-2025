@@ -18,6 +18,7 @@ HASH_LEN = 32
 KEY_LEN = 16
 NONCE_LEN = 12
 AUTHTAG_LEN = 16
+SIG_LEN = 64
 DEPTH = 64
 
 hash = lambda m: HASH_ALG(m).digest()
@@ -39,21 +40,28 @@ def random_bytes(n):
 def gen_root_key() -> bytes:
     return random_bytes(KEY_LEN)
 
+def gen_ed25519_key() -> bytes:
+    return Ed25519PrivateKey.generate().private_bytes_raw()
+
+def get_ed25519_pubkey(key) -> bytes:
+    return Ed25519PrivateKey.from_private_bytes(key).public_key().public_bytes_raw()
 
 def get_nonce() -> bytes:
     return random_bytes(NONCE_LEN)
 
 
 class Secrets:
-    __slots__ = ("channels", "channel_keys", "shared_key_root")
+    __slots__ = ("channels", "channel_keys", "shared_key_root", "signing_key")
     channels: list
     channel_keys: dict[str, bytes]
     shared_key_root: bytes
+    signing_key: bytes
 
-    def __init__(self, channels, channel_keys, shared_key_root):
+    def __init__(self, channels, channel_keys, shared_key_root, signing_key):
         self.channels = channels
         self.channel_keys = channel_keys
         self.shared_key_root = shared_key_root
+        self.signing_key = signing_key
     
     @classmethod
     def parse(cls, data):
@@ -61,8 +69,9 @@ class Secrets:
         channels = data["channels"]
         channel_keys = {int(k): bytes.fromhex(v) for k, v in data["root_keys"].items()}
         shared_key_root = bytes.fromhex(data["shared_key_root"])
+        signing_key = bytes.fromhex(data["signing_key"])
         return cls(
-            channels=channels, channel_keys=channel_keys, shared_key_root=shared_key_root
+            channels=channels, channel_keys=channel_keys, shared_key_root=shared_key_root, signing_key=signing_key
         )
     
     def root_key(self, channel_id):
@@ -79,9 +88,8 @@ def encrypt(key, nonce, data, aad):
     return ciphertext, tag
 
 
-def sign(data):
-    # TODO: null privkey for testing ;)
-    priv_key = Ed25519PrivateKey.from_private_bytes(bytes(32))
+def sign(key, data):
+    priv_key = Ed25519PrivateKey.from_private_bytes(key)
     signature = priv_key.sign(data)
     return signature
 

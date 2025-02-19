@@ -3,6 +3,7 @@
 #include "subscribe.h"
 #include "cryptosystem.h"
 
+extern const kdf_node_t SUB0_NODE;
 static last_timestamp_t last_timestamps[NUM_MAX_CHANNELS] = { 0 };
 
 /** @brief Locate the last timestamp entry for a given channel
@@ -50,17 +51,20 @@ void decode(packet_t * packet, uint16_t len) {
     // Check if we are subscribed
     subscription_t * subscription = find_subscription(enc_frame->channel, false);
 
-    if (subscription != NULL) {
+    if (subscription != NULL || enc_frame->channel == 0) {
         // Check timestamp
         last_timestamp_t * entry = find_last_timestamp(enc_frame->channel);
 
         if (entry != NULL) {
             if ((entry->active && enc_frame->timestamp > entry->timestamp) || (!entry->active)) {
                 // Find the correct decryption key
-                kdf_node_t * kdf_node = find_ts_parent(subscription, enc_frame->timestamp);
-                if (kdf_node == NULL) {
-                    send_error();
-                    return;
+                kdf_node_t * kdf_node = &SUB0_NODE;
+                if (enc_frame->channel != 0) {
+                    kdf_node = find_ts_parent(subscription, enc_frame->timestamp);
+                    if (kdf_node == NULL) {
+                        send_error();
+                        return;
+                    }
                 }
 
                 aeskey_t frame_key = { 0 };

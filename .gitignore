@@ -341,3 +341,4 @@ msdk/
 # Secrets
 secrets/
 decoder-poc/secrets.json
+decoder/src/secrets.c
