@@ -33,6 +33,8 @@ class Encoder:
             channel: secrets.get_tree(channel) for channel in secrets.channels
         }
 
+        self.signing_key = secrets.signing_key
+
     def encode(self, channel: int, frame: bytes, timestamp: int) -> bytes:
         """The frame encoder function
 
@@ -83,7 +85,7 @@ class Encoder:
             + encrypted_frame
         )
 
-        return packet + cryptosystem.sign(packet_prefix + packet)
+        return packet + cryptosystem.sign(self.signing_key, packet_prefix + packet)
 
 
 def main(bench_encode=False, bench_decode=False):

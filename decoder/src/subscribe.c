@@ -54,22 +54,24 @@ void subscribe(packet_t * packet, uint16_t len) {
     uint16_t sub_len = 0;
     subscription_t * sub = decrypt_subscription(packet, len, &sub_len);
 
-    // Sanity checks
-    if (sub->channel == 0) {
-        send_error();
-        return;
-    }
+    if (sub != NULL && sub_len > 0) {
+        // Sanity checks
+        if (sub->channel == 0) {
+            send_error();
+            return;
+        }
 
-    // Find appropriate buf to copy into
-    subscription_t * slot = find_subscription(sub->channel, true);
+        // Find appropriate buf to copy into
+        subscription_t * slot = find_subscription(sub->channel, true);
 
-    if (slot != NULL) {
-        // Erase the appropriate page
-        flash_simple_erase_page((uint32_t)slot);
-        flash_simple_write((uint32_t)slot, sub->rawBytes, sub_len);
+        if (slot != NULL) {
+            // Erase the appropriate page
+            flash_simple_erase_page((uint32_t)slot);
+            flash_simple_write((uint32_t)slot, sub->rawBytes, sub_len);
 
-        send_header(OPCODE_SUBSCRIBE, 0);
-        return;
+            send_header(OPCODE_SUBSCRIBE, 0);
+            return;
+        }
     }
 
     send_error();

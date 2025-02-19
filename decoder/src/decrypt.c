@@ -1,8 +1,7 @@
 #include "decrypt.h"
 // #include "kdf.h"
 
-
-static uint8_t shared_sub_key[KEY_LEN] = { 0 };
+extern const aeskey_t SUBSCRIPTION_KEY;
 static uint8_t decrypt_buffer[BODY_LEN] = { 0 };
 
 /** @brief Decrypt a frame.
@@ -61,7 +60,7 @@ subscription_t * decrypt_subscription(packet_t * packet, uint16_t packet_len, ui
     memset(decrypt_buffer, 0, sizeof(decrypt_buffer));
 
     // Initialize AES context
-    ret = wc_AesGcmSetKey(&ctx, shared_sub_key, KEY_LEN);
+    ret = wc_AesGcmSetKey(&ctx, SUBSCRIPTION_KEY.bytes, sizeof(SUBSCRIPTION_KEY.bytes));
     if (ret != 0) {
         return NULL;
     }

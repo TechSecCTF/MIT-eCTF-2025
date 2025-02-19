@@ -33,7 +33,8 @@ def gen_secrets(channels: list[int]) -> bytes:
     secrets = {
         "channels": channels,
         "root_keys": { channel: cryptosystem.gen_root_key().hex() for channel in channels },
-        "shared_key_root": cryptosystem.gen_root_key().hex()
+        "shared_key_root": cryptosystem.gen_root_key().hex(),
+        "signing_key": cryptosystem.gen_ed25519_key().hex(),
     }
 
     return json.dumps(secrets).encode()

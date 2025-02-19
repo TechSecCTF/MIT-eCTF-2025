@@ -39,12 +39,11 @@ def gen_subscription(
     subtree = tree.minimal_tree(start, end)
     subscription = subtree.get_subscription()
 
-    shared_key = cryptosystem.hash(secrets.shared_key_root + struct.pack("<I", device_id))[
+    signing_key = secrets.signing_key
+
+    shared_key = cryptosystem.hash(secrets.shared_key_root + struct.pack(">I", device_id))[
         : cryptosystem.KEY_LEN
     ]
-
-    # TODO: for testing
-    shared_key = bytes(cryptosystem.KEY_LEN)
 
     nonce = cryptosystem.get_nonce()
 
@@ -66,7 +65,7 @@ def gen_subscription(
 
     header = b"%S" + struct.pack("<H", length)
     body = struct.pack(f"{cryptosystem.NONCE_LEN}s", nonce) + tag + subscription
-    signature = cryptosystem.sign(header + body)
+    signature = cryptosystem.sign(signing_key, header + body)
 
     return body + signature
 
