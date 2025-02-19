@@ -30,6 +30,8 @@ def gen_secrets(channels: list[int]) -> bytes:
 
     :returns: Contents of the secrets file
     """
+    channels = [0] + channels
+
     secrets = {
         "channels": channels,
         "root_keys": { channel: cryptosystem.gen_root_key().hex() for channel in channels },
