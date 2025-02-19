@@ -31,12 +31,12 @@ ENTRY=firmware_startup
 
 # ****************** Integration **************
 
-PROJ_CFLAGS += -I../decoder-poc/src
-SRCS += ../decoder-poc/src/cryptosystem.c
+#PROJ_CFLAGS += -I../decoder-poc/src
+#SRCS += ../decoder-poc/src/cryptosystem.c
 
 # ****************** wolfSSL *******************
-VPATH += ../wolfssl/wolfcrypt/src
-IPATH += ../wolfssl
+VPATH += wolfssl/wolfcrypt/src
+IPATH += wolfssl
 
 # Include our necessary features
 PROJ_CFLAGS += -DHAVE_AESGCM
@@ -61,6 +61,6 @@ PROJ_CFLAGS += -DWC_RSA_BLINDING
 
 # **************** Secrets for Decoder ****************
 gen-decoder-secrets:
-	python gen_decoder_secrets.py $(DECODER_ID)
+	python3 gen_decoder_secrets.py $(DECODER_ID)
 
 release: gen-decoder-secrets
