@@ -53,10 +53,6 @@ class Encoder:
 
         :returns: The encoded frame, which will be sent to the Decoder
         """
-        # For the emergency channel, broadcast in plaintext.
-        if channel == 0:
-            return struct.pack("<I", channel) + frame
-
         frame_key = self.trees[channel].frame_key(timestamp)
         nonce = cryptosystem.get_nonce()
 
