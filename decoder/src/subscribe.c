@@ -3,39 +3,52 @@
 #include "verify.h"
 
 subscription_t * subscriptions[NUM_MAX_SUBSCRIPTIONS] = {
-    (subscription_t *)SUB1,
-    (subscription_t *)SUB2,
-    (subscription_t *)SUB3,
-    (subscription_t *)SUB4,
-    (subscription_t *)SUB5,
-    (subscription_t *)SUB6,
-    (subscription_t *)SUB7,
-    (subscription_t *)SUB8,
+    (subscription_t *)FLASH_SUB1,
+    (subscription_t *)FLASH_SUB2,
+    (subscription_t *)FLASH_SUB3,
+    (subscription_t *)FLASH_SUB4,
+    (subscription_t *)FLASH_SUB5,
+    (subscription_t *)FLASH_SUB6,
+    (subscription_t *)FLASH_SUB7,
+    (subscription_t *)FLASH_SUB8,
 };
 
-/** @brief Locate a subscription file in memory
+/** @brief Locate an existing subscription file in memory
  * 
- *  @param channel: uint32_t, Channel number of the subscription to find.
- *  @param empty_ok: bool, Whether to return an open subscription slot.
+ *  @param channel: channel_id_t, Channel number of the subscription to find.
  * 
  *  @return subscription_t *: pointer to the subscription file in memory, NULL if not found.
  */
-subscription_t * find_subscription(uint32_t channel, bool empty_ok) {
-    subscription_t * last_empty = NULL;
+subscription_t *find_matching_subscription(channel_id_t channel) {
+    if (channel == 0) return NULL;
 
     for (int i = 0; i < NUM_MAX_SUBSCRIPTIONS; i++) {
-        subscription_t * slot = subscriptions[i];
-        if (slot->channel == 0)
-            last_empty = slot;
-
-        if (slot->channel == channel)
-            return slot;
+        if (subscriptions[i]->channel == channel) return subscriptions[i];
     }
 
-    if (empty_ok)
-        return last_empty;
-
     return NULL;
+}
+
+/** @brief Locate a subscription file in memory
+ * 
+ *  @param channel: channel_id_t, Channel number of the subscription to find.
+ * 
+ *  @return subscription_t *: pointer to the subscription file in memory, NULL if not found.
+ */
+subscription_t *find_subscription_or_unused(channel_id_t channel) {
+    if (channel == 0) return NULL;
+
+    subscription_t *last_empty_slot = NULL;
+    for (int i = 0; i < NUM_MAX_SUBSCRIPTIONS; i++) {
+        if (subscriptions[i]->channel == 0) {
+            last_empty_slot = subscriptions[i];
+            continue;
+        }
+
+        if (subscriptions[i]->channel == channel) return subscriptions[i];
+    }
+
+    return last_empty_slot;
 }
 
 /** @brief Handle a received subscription update file
