@@ -17,8 +17,10 @@ typedef union {
         uint32_t num_channels;
         subscription_entry_t entries[NUM_MAX_SUBSCRIPTIONS];
     };
-    uint8_t rawBytes[sizeof(uint32_t) + sizeof(subscription_entry_t)*NUM_MAX_SUBSCRIPTIONS];
+    uint8_t rawBytes[sizeof(uint32_t) + sizeof(subscription_entry_t) * NUM_MAX_SUBSCRIPTIONS];
 } list_response_t;
+
+#define LIST_RESPONSE_SIZE(num_entries) (sizeof(uint32_t) + sizeof(subscription_entry_t) * num_entries)
 
 #pragma pack(pop)
 

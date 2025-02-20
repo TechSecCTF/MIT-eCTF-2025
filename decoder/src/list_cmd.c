@@ -7,6 +7,7 @@ extern subscription_t * subscriptions[NUM_MAX_SUBSCRIPTIONS];
  */
 void list(void) {
     list_response_t response = {0};
+
     int curr = 0;
     for (int i = 0; i < NUM_MAX_SUBSCRIPTIONS; i++) {
         subscription_t * slot = subscriptions[i];
@@ -19,5 +20,5 @@ void list(void) {
     }
     response.num_channels = curr;
 
-    send_packet(response.rawBytes, sizeof(uint32_t) + sizeof(subscription_entry_t)*curr, OPCODE_LIST);
+    send_packet(response.rawBytes, LIST_RESPONSE_SIZE(curr), OPCODE_LIST);
 }
