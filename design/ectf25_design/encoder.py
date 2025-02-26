@@ -16,8 +16,6 @@ import struct
 import json
 import time
 
-from ectf25.utils.decoder import *
-
 
 class Encoder:
     def __init__(self, secrets: bytes):
@@ -122,6 +120,7 @@ def main(bench_encode=False, bench_decode=False):
 
     if bench_decode:
         import random
+        from ectf25.utils.decoder import DecoderIntf
 
         decoder = DecoderIntf("/dev/ttyACM0")
         total, maximum, N = 0, 0, 100
@@ -142,4 +141,4 @@ def main(bench_encode=False, bench_decode=False):
 
 
 if __name__ == "__main__":
-    main(False, True)
+    main(bench_encode=False, bench_decode=False)
