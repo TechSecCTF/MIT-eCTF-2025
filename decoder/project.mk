@@ -62,5 +62,7 @@ PROJ_CFLAGS += -DWC_RSA_BLINDING
 # **************** Secrets for Decoder ****************
 gen-decoder-secrets:
 	python3 gen_decoder_secrets.py $(DECODER_ID)
+	# Re-evaluate dependency graph and source tree
+	@$(MAKE) --no-print-directory
 
 release: gen-decoder-secrets
