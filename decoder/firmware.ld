@@ -2,9 +2,9 @@
 MEMORY {
     ROM         (rx) : ORIGIN = 0x00000000, LENGTH = 0x00010000 /* 64kB ROM */
     BOOTLOADER  (rx) : ORIGIN = 0x10000000, LENGTH = 0x0000E000 /* Bootloader flash */
-    FLASH       (rx) : ORIGIN = 0x1000E000, LENGTH = 0x00026000 /* Location of team firmware */
-    SUBS        (rw) : ORIGIN = 0x10034000, LENGTH = 0x00012000 /* Location of subscriptions */
-    RESERVED    (rw) : ORIGIN = 0x10046000, LENGTH = 0x00038000 /* Reserved */
+    FLASH       (rx) : ORIGIN = 0x1000E000, LENGTH = 0x00032000 /* Location of team firmware */
+    SUBS        (rw) : ORIGIN = 0x10040000, LENGTH = 0x00020000 /* Location of subscriptions */
+    RESERVED    (rw) : ORIGIN = 0x10060000, LENGTH = 0x0001E000 /* Reserved */
     ROM_BL_PAGE (rw) : ORIGIN = 0x1007E000, LENGTH = 0x00002000 /* Reserved */
     SRAM        (rwx): ORIGIN = 0x20000000, LENGTH = 0x00020000 /* 128kB SRAM */
 }
@@ -79,10 +79,13 @@ SECTIONS {
     {
         _data = ALIGN(., 4);
         *(.data*)           /*read-write initialized data: initialized global variable*/
+
+        . = ALIGN(8192);
+        _flashprog = .;
         *(.flashprog*)      /* Flash program */
 
         /* These array sections are used by __libc_init_array to call static C++ constructors */
-        . = ALIGN(4);
+        . = ALIGN(8192);
         /* preinit data */
         PROVIDE_HIDDEN (__preinit_array_start = .);
         KEEP(*(.preinit_array))
