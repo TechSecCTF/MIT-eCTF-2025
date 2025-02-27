@@ -50,11 +50,9 @@ def write_pubkey(secrets):
 
 
 if __name__ == "__main__":
-    decoder_id = (
-        bytes.fromhex(sys.argv[1][2:])
-        if sys.argv[1].startswith("0x")
-        else bytes.fromhex(sys.argv[1])
-    )
+    decoder_id = sys.argv[1][2:] if sys.argv[1].startswith("0x") else sys.argv[1]
+    decoder_id = "0"*(8 - len(decoder_id)) + decoder_id
+    decoder_id = bytes.fromhex(decoder_id)
     if len(sys.argv) > 2:
         secrets_file = sys.argv[2]
     else:
