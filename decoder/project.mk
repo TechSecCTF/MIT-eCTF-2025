@@ -35,8 +35,8 @@ ENTRY=firmware_startup
 #SRCS += ../decoder-poc/src/cryptosystem.c
 
 # ****************** wolfSSL *******************
-VPATH += wolfssl/wolfcrypt/src
-IPATH += wolfssl
+VPATH += $(WOLFSSL_PATH)/wolfcrypt/src
+IPATH += $(WOLFSSL_PATH)
 
 # Include our necessary features
 PROJ_CFLAGS += -DHAVE_AESGCM
