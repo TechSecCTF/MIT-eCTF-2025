@@ -7,6 +7,7 @@
 
 #ifdef _DECODER_POC
 #define BODY_LEN 4096
+#include "secrets.h"
 #else
 #include "messaging.h"
 #endif

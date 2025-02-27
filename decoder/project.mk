@@ -31,8 +31,8 @@ ENTRY=firmware_startup
 
 # ****************** Integration **************
 
-#PROJ_CFLAGS += -I../decoder-poc/src
-#SRCS += ../decoder-poc/src/cryptosystem.c
+PROJ_CFLAGS += -I./cryptosystem/src
+SRCS += ./cryptosystem/src/cryptosystem.c
 
 # ****************** wolfSSL *******************
 VPATH += $(WOLFSSL_PATH)/wolfcrypt/src
