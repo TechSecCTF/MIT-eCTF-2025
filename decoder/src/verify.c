@@ -16,6 +16,11 @@ int verify_packet(packet_t * packet, uint16_t len) {
     int ret;
     int verified;
 
+    // Ensure packet is not larger than expected.
+    if (len > sizeof(packet_t)) {
+        return -1;
+    }
+
     // Check for underflow
     if (len < SIGNATURE_LEN) {
         return -1;

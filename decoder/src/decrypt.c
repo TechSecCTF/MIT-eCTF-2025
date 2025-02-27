@@ -18,6 +18,11 @@ frame_t * decrypt_frame(packet_t * packet, uint16_t packet_len, aeskey_t * frame
     Aes ctx = { 0 };
     enc_frame_t * enc = (enc_frame_t *)packet;
 
+    // Ensure packet is not larger than expected.
+    if (packet_len > sizeof(packet_t)) {
+        return NULL;
+    }
+
     // Clear decryption buffer
     memset(decrypt_buffer, 0, sizeof(decrypt_buffer));
 
@@ -55,6 +60,11 @@ subscription_t * decrypt_subscription(packet_t * packet, uint16_t packet_len, ui
     int ret;
     Aes ctx = { 0 };
     enc_subscription_t * enc = (enc_subscription_t *)packet;
+
+    // Ensure packet is not larger than expected.
+    if (packet_len > sizeof(packet_t)) {
+        return NULL;
+    }
 
     // Clear decryption buffer
     memset(decrypt_buffer, 0, sizeof(decrypt_buffer));
