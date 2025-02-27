@@ -34,9 +34,8 @@ RUN apt-get install -y unzip && \
 
 ENV MAXIM_PATH=/root/msdk-2024_02
 
-# Install our ectf25_design utils so we can use them during the build process
-COPY design-docker-build-context-workaround/ /root/design
-RUN python3 -m pip install --break-system-packages -e ./design
+# Install some Python packages for gen_decoder_secrets.py
+RUN python3 -m pip install --break-system-packages cryptography
 
 WORKDIR /decoder
 
