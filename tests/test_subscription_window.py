@@ -14,6 +14,38 @@ logger.remove()
 logger.add(sys.stdout, level="INFO")
 
 
+def expect_error(encoder, decoder, channel, timestamp, start, end, n=None):
+    prefix = str(n) + ": " if n else ""
+    frame = random.randbytes(random.randint(1, 64))
+    encoded_frame = encoder.encode(channel, frame, timestamp)
+    try:
+        decoder.decode(encoded_frame)
+    except DecoderError:
+        logger.info(
+            f"{prefix}Got expected DecoderError with {timestamp=}, range {start=} {end=}"
+        )
+    else:
+        raise Exception(
+            f"{prefix}Decoder did not raise a DecoderError with {timestamp=}, range {start=} {end=}"
+        )
+
+
+def expect_success(encoder, decoder, channel, timestamp, start, end, n=None):
+    prefix = str(n) + ": " if n else ""
+    frame = random.randbytes(random.randint(1, 64))
+    encoded_frame = encoder.encode(channel, frame, timestamp)
+    try:
+        decoded_frame = decoder.decode(encoded_frame)
+    except DecoderError:
+        raise Exception(
+            f"{prefix}Decoder unexpectedly raised a DecoderError with {timestamp=}, range {start=} {end=}"
+        )
+    assert decoded_frame == frame
+    logger.info(
+        f"{prefix}Successfully decoded frame with {timestamp=}, range {start=} {end=}"
+    )
+
+
 def parse_args():
     parser = argparse.ArgumentParser(prog="ectf25_design.encoder")
     parser.add_argument(
@@ -61,60 +93,29 @@ def main(args):
     for n in range(N):
         # Always test timestamp=0 first, then randomly select N monotonically increasing timestamps below the subscription window
         # Keeping track of last timestamp not important yet, as timestamps below the subscription window are not decoded
-        timestamp = 0 if n == 0 else random.randint(0, start - 1)
-        frame = random.randbytes(random.randint(1, 64))
-        encoded_frame = encoder.encode(channel, frame, timestamp)
-        try:
-            decoder.decode(encoded_frame)
-        except DecoderError:
-            logger.info(
-                f"{n}: Got expected DecoderError with {timestamp=}, range {start=} {end=}"
-            )
-            continue
-        raise Exception(f"Decoder did not raise a DecoderError with {timestamp=}")
+        timestamp = 0 if n == 0 else random.randint(0, start - 2)
+        expect_error(encoder, decoder, channel, timestamp, start, end, n)
 
     # Test start-1 and start
-    # TODO!
+    expect_error(encoder, decoder, channel, start - 1, start, end)
+    expect_success(encoder, decoder, channel, start, start, end)
 
     # Test N random frames monotonically increasing frames inside the subscription window
     logger.info(f"Testing ~{N} frames inside the subscription window")
-    timestamps = sorted(list(set(random.randint(start, end) for _ in range(N))))
+    timestamps = sorted(list(set(random.randint(start + 1, end) for _ in range(N))))
     for n, timestamp in enumerate(timestamps):
-        frame = random.randbytes(random.randint(1, 64))
-        encoded_frame = encoder.encode(channel, frame, timestamp)
-        # We expect the decoder to decode the frame correctly
-        try:
-            decoded_frame = decoder.decode(encoded_frame)
-        except DecoderError:
-            raise Exception(
-                f"Decoder unexpectedly raised a DecoderError with {timestamp=}"
-            )
-        # Assert the decoded frame is the same as the original frame
-        assert decoded_frame == frame
-        logger.info(
-            f"{n} Successfully decoded frame with {timestamp=}, range {start=} {end=}"
-        )
+        expect_success(encoder, decoder, channel, timestamp, start, end, n)
 
     # Test end and end+1
-    # TODO!
+    expect_success(encoder, decoder, channel, end, start, end)
+    expect_error(encoder, decoder, channel, end + 1, start, end)
 
     # Test N random frames above the subscription window, and assert they all raise a DecoderError
     logger.info(f"Testing {N} frames above the subscription window")
     for n in range(N):
         timestamp = end + 1 if n == 0 else +random.randint(end + 1, 2**64 - 1)
-        frame = random.randbytes(random.randint(1, 64))
-        encoded_frame = encoder.encode(channel, frame, timestamp)
-        try:
-            decoder.decode(encoded_frame)
-        except DecoderError:
-            logger.info(
-                f"{n}: Got expected DecoderError with {timestamp=}, range {start=} {end=}"
-            )
-            continue
-        raise Exception(
-            f"Decoder did not raise a DecoderError with {timestamp=}, range {start=} {end=}"
-        )
-    
+        expect_error(encoder, decoder, channel, timestamp, start, end, n)
+
     logger.info("Subscription window test passed, yippee!")
 
 
