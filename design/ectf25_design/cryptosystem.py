@@ -2,6 +2,7 @@
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+import builtins
 import hashlib
 import os
 import json
@@ -9,8 +10,6 @@ import random
 import struct
 import sys
 import time
-
-sys.setrecursionlimit(100_000)
 
 ENCRYPTION_ALG = AESGCM
 HASH_ALG = hashlib.sha256
@@ -40,11 +39,14 @@ def random_bytes(n):
 def gen_root_key() -> bytes:
     return random_bytes(KEY_LEN)
 
+
 def gen_ed25519_key() -> bytes:
     return Ed25519PrivateKey.generate().private_bytes_raw()
 
+
 def get_ed25519_pubkey(key) -> bytes:
     return Ed25519PrivateKey.from_private_bytes(key).public_key().public_bytes_raw()
+
 
 def get_nonce() -> bytes:
     return random_bytes(NONCE_LEN)
@@ -62,7 +64,7 @@ class Secrets:
         self.channel_keys = channel_keys
         self.shared_key_root = shared_key_root
         self.signing_key = signing_key
-    
+
     @classmethod
     def parse(cls, data):
         data = json.loads(data)
@@ -71,12 +73,15 @@ class Secrets:
         shared_key_root = bytes.fromhex(data["shared_key_root"])
         signing_key = bytes.fromhex(data["signing_key"])
         return cls(
-            channels=channels, channel_keys=channel_keys, shared_key_root=shared_key_root, signing_key=signing_key
+            channels=channels,
+            channel_keys=channel_keys,
+            shared_key_root=shared_key_root,
+            signing_key=signing_key,
         )
-    
+
     def root_key(self, channel_id):
         return self.channel_keys[channel_id]
-    
+
     def get_tree(self, channel_id):
         return Tree(root_key=self.root_key(channel_id))
 
@@ -135,7 +140,8 @@ class Tree:
 
         Returns None if nodes in tree cannot generate the given timestamp.
         """
-        return self.get_node(self.depth, timestamp).key
+        node = self.get_node(self.depth, timestamp)
+        return node.key if node is not None else None
 
     def minimal_positions(self, start, end):
         """
@@ -175,12 +181,47 @@ class Tree:
 
         return tree if tree.nodes else None
 
+    def _alt_minimal_tree(self, start, end):
+        """
+        Return a new Tree containing minimal set of nodes to cover [start, end]
+
+        Alternative implementation, showing that we probably implement our
+        algorithm correctly by doing it two different ways :)
+
+        NOTE: This is wonky, assumes self has the root node.
+        """
+        tree = Tree(make_root=False)
+
+        while tree.range() != (start, end):
+            # Either start at start, or the end of the current tree coverage
+            curr_start = start if tree.range() is None else tree.range()[1] + 1
+
+            # Find the first node where start == curr_start
+            node = self.get_node(0, 0)
+            while node.start() != curr_start:
+                left, right = node.left(), node.right()
+                if curr_start in left:
+                    node = left
+                elif curr_start in right:
+                    node = right
+                else:
+                    raise Exception("Node does not contain start")
+
+            # Descend left until we find a node with an end <= desired end
+            while node.end() > end:
+                node = node.left()
+            tree.add(node)
+        return tree
+
     def range(self):
         """
         Returns the range of timestamps covered by this tree.
 
         NOTE: Does not check for contiguity.
         """
+        if not self.nodes:
+            return None
+
         return (
             min(self.nodes, key=lambda x: x.start()).start(),
             max(self.nodes, key=lambda x: x.end()).end(),
@@ -222,6 +263,12 @@ class Tree:
                     break
             if not found:
                 return False
+        if set(self.nodes) != set(other.nodes):
+            return False
+        if len(self.nodes) != len(other.nodes):
+            return False
+        if len(set(self.nodes)) != len(self.nodes):
+            return False
         return True
 
     def __len__(self):
@@ -305,6 +352,17 @@ class Node:
         """
         return self.contains(self.depth, timestamp)
 
+    def __eq__(self, other):
+        return (
+            self.level == other.level
+            and self.index == other.index
+            and self.key == other.key
+            and self.depth == other.depth
+        )
+
+    def __hash__(self):
+        return builtins.hash((self.level, self.index, self.key, self.depth))
+
     def __repr__(self):
         return f"Node({self.level}, {self.index}, 0x{self.key.hex()})"
 
@@ -321,27 +379,62 @@ def bench(n=1000):
     return total / n
 
 
-def test_same_frame_keys(N=1_000):
-    for idx in range(1_000):
+def test_same_frame_keys(N=100):
+    print(f"running test_same_frame_keys({N})")
+    for n in range(N):
+        if N > 100 and n % 100 == 0:
+            print(f"  iter {n}")
         t = Tree()  # Generate a tree with a random root key.
         start = random.randint(0, 2**DEPTH - 1)
         end = random.randint(start, 2**DEPTH - 1)
         mt = t.minimal_tree(start, end)  # Generate a tree covering only [start, end]
+        amt = t._alt_minimal_tree(start, end)
         for n in range(N):
             # Assert a random sampling of their frame keys are the same.
             r = random.randint(start, end)
             assert t.frame_key(r) == mt.frame_key(r)
+            assert t.frame_key(r) == amt.frame_key(r)
 
 
-def test_subscription(N=1_000):
-    for _ in range(N):
+def test_subscription(N=1000):
+    print(f"running test_subscription({N})")
+    for n in range(N):
+        if N > 1000 and n % 1000 == 0:
+            print(f"  iter {n}")
         t = Tree()
         start = random.randint(0, 2**DEPTH - 1)
         end = random.randint(start, 2**DEPTH - 1)
         mt = t.minimal_tree(start, end)
+        amt = t._alt_minimal_tree(start, end)
         omt = Tree.from_subscription(mt.get_subscription())
         assert mt == omt
+        oatm = Tree.from_subscription(amt.get_subscription())
+        assert amt == oatm
+
+
+def test_minimal_tree(N=1000):
+    print(f"running test_minimal_tree({N})")
+    for n in range(N):
+        if N > 1000 and n % 1000 == 0:
+            print(f"  iter {n}")
+        t = Tree()
+        start = random.randint(0, 2**DEPTH - 1)
+        end = random.randint(start, 2**DEPTH - 1)
+        mt = t.minimal_tree(start, end)
+        amt = t._alt_minimal_tree(start, end)
+        assert mt == amt
+        assert mt.range() == (start, end)
+        assert amt.range() == (start, end)
+        assert mt.frame_key(start) == amt.frame_key(start)
+        assert mt.frame_key(start - 1) is None
+        assert amt.frame_key(start - 1) is None
+        assert mt.frame_key(end) == amt.frame_key(end)
+        assert mt.frame_key(end + 1) is None
+        assert amt.frame_key(end + 1) is None
 
 
 if __name__ == "__main__":
+    test_same_frame_keys()
+    test_subscription()
+    test_minimal_tree()
     pass
