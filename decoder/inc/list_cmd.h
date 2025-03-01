@@ -1,3 +1,12 @@
+/**
+ * @file "list_cmd.h"
+ * @author MIT TechSec
+ * @brief List command implementation header
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 Massachusetts Institute of Technology
+ */
+
 #ifndef _LIST_CMD_H
 #define _LIST_CMD_H
 

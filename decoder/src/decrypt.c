@@ -1,5 +1,13 @@
+/**
+ * @file "decrypt.c"
+ * @author MIT TechSec
+ * @brief Frame and subscription decryption functions
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 Massachusetts Institute of Technology
+ */
+
 #include "decrypt.h"
-// #include "kdf.h"
 
 extern const aeskey_t SUBSCRIPTION_KEY;
 static uint8_t decrypt_buffer[BODY_LEN] = { 0 };

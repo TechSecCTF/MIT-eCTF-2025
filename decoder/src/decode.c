@@ -1,3 +1,13 @@
+/**
+ * @file "decode.c"
+ * @author MIT TechSec
+ * @brief Frame decoding functions
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 Massachusetts Institute of Technology
+ */
+
+
 #include "decode.h"
 #include "decrypt.h"
 #include "subscribe.h"

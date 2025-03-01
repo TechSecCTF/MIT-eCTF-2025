@@ -1,3 +1,12 @@
+/**
+ * @file "messaging.c"
+ * @author MIT TechSec
+ * @brief Message reading and writing functions
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 Massachusetts Institute of Technology
+ */
+
 #include "messaging.h"
 
 /** @brief Read a well-formed packet over UART.

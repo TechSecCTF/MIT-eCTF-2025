@@ -1,3 +1,12 @@
+/**
+ * @file "main.c"
+ * @author MIT TechSec
+ * @brief Initialization and main loop for the Decoder
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 Massachusetts Institute of Technology
+ */
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>

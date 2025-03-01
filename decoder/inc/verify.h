@@ -1,3 +1,12 @@
+/**
+ * @file "verify.h"
+ * @author MIT TechSec
+ * @brief Packet verification functions header
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 Massachusetts Institute of Technology
+ */
+
 #ifndef _VERIFY_H
 #define _VERIFY_H
 

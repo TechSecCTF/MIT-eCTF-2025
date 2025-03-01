@@ -1,3 +1,12 @@
+/**
+ * @file "cryptosystem.c"
+ * @author MIT TechSec
+ * @brief Frame key derivation and subscriptions parsing functions
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 Massachusetts Institute of Technology
+ */
+
 #include "cryptosystem.h"
 #include "wolfssl/wolfcrypt/hash.h"
 #include <string.h>

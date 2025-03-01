@@ -1,3 +1,12 @@
+/**
+ * @file "messaging.h"
+ * @author MIT TechSec
+ * @brief Message reading and writing functions header
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 Massachusetts Institute of Technology
+ */
+
 #ifndef _MESSAGING_H
 #define _MESSAGING_H
 

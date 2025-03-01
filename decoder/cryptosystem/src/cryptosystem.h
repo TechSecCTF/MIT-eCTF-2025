@@ -1,3 +1,12 @@
+/**
+ * @file "cryptosystem.h"
+ * @author MIT TechSec
+ * @brief Frame key derivation and subscriptions parsing functions header
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 Massachusetts Institute of Technology
+ */
+
 #ifndef _CRYPTOSYSTEM_H
 #define _CRYPTOSYSTEM_H
 

@@ -1,3 +1,12 @@
+/**
+ * @file "subscribe.c"
+ * @author MIT TechSec
+ * @brief Channel subscription functions
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 Massachusetts Institute of Technology
+ */
+
 #include "subscribe.h"
 #include "decrypt.h"
 #include "verify.h"

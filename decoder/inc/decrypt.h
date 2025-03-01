@@ -1,3 +1,12 @@
+/**
+ * @file "decrypt.h"
+ * @author MIT TechSec
+ * @brief Frame and subscription decryption functions header
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 Massachusetts Institute of Technology
+ */
+
 #ifndef _DECRYPT_H
 #define _DECRYPT_H
 

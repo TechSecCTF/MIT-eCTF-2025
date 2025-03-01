@@ -1,3 +1,12 @@
+/**
+ * @file "verify.c"
+ * @author MIT TechSec
+ * @brief Packet verification functions
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 Massachusetts Institute of Technology
+ */
+
 #include "verify.h"
 
 extern const uint8_t SK_BYTES[32];
