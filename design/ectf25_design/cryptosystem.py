@@ -173,13 +173,15 @@ class Tree:
         """
         Return a new Tree containing minimal set of nodes to cover [start, end].
 
-        NOTE: This is wonky, assumes self has the root node.
+        NOTE: Assumes self has the root node.
         """
         tree = Tree(make_root=False)
         for level, index in self.minimal_positions(start, end):
             tree.add(self.get_node(level, index))
 
-        return tree if tree.nodes else None
+        assert tree.range() == (start, end)
+
+        return tree
 
     def _alt_minimal_tree(self, start, end):
         """
@@ -188,7 +190,7 @@ class Tree:
         Alternative implementation, showing that we probably implement our
         algorithm correctly by doing it two different ways :)
 
-        NOTE: This is wonky, assumes self has the root node.
+        NOTE: Assumes self has the root node.
         """
         tree = Tree(make_root=False)
 
