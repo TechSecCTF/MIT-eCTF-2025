@@ -121,6 +121,8 @@ void setup_mpu(void) {
     ARM_MPU_Enable(MPU_CTRL_PRIVDEFENA_Msk | MPU_CTRL_HFNMIENA_Msk);
 }
 
+/** @brief Initialize hardware, subscription pages, and signing key.
+ */
 void init(void) {
     // Initialize ARM MPU
     setup_mpu();
@@ -142,6 +144,8 @@ void init(void) {
     if (uart_init() < 0) panic();
 }
 
+/** @brief Main command processing loop.
+ */
 int main(void) {
     int read = 0;
     packet_t packet = {0};
