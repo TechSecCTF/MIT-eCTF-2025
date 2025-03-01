@@ -1,14 +1,20 @@
 import struct
+import sys
 
 from ectf25_design import cryptosystem
 from ectf25_design import gen_subscription
 
 
 def main():
+  if len(sys.argv) < 2:
+    print(f"Usage: {sys.argv[0]} <channel>", file=sys.stderr)
+    sys.exit(1)
+  
+  channel = int(sys.argv[1])
+
   with open("secrets.json", "r") as f:
     secrets = cryptosystem.Secrets.parse(f.read())
   
-  channel = 1
   tree = secrets.get_tree(channel)
   start = 0
   end = 5
