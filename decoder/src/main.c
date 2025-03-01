@@ -61,49 +61,57 @@ void clear_subscription_pages(void) {
  */
 void setup_mpu(void) {
     // Application code [0x1000_0000, 0x1004_0000] RX
-    ARM_MPU_SetRegion(
+    ARM_MPU_SetRegionEx(
+        0,
         ARM_MPU_RBAR(0, 0x10000000),
         ARM_MPU_RASR(0, ARM_MPU_AP_PRO, ARM_MPU_ACCESS_ORDERED, 1, 0, 0, 0b00000000, ARM_MPU_REGION_SIZE_256KB)
     );
 
-    // Subscriptions [0x1004_0000, 0x1008_0000] RW
-    ARM_MPU_SetRegion(
+    // Subscriptions [0x1004_0000, 0x1008_0000] RO
+    ARM_MPU_SetRegionEx(
+        1,
         ARM_MPU_RBAR(1, 0x10040000),
-        ARM_MPU_RASR(1, ARM_MPU_AP_PRIV, ARM_MPU_ACCESS_ORDERED, 1, 0, 0, 0b00000000, ARM_MPU_REGION_SIZE_256KB)
+        ARM_MPU_RASR(1, ARM_MPU_AP_PRO, ARM_MPU_ACCESS_ORDERED, 1, 0, 0, 0b00000000, ARM_MPU_REGION_SIZE_256KB)
     );
 
     // SRAM [0x2000_0000, 0x2000_2000] RW
-    ARM_MPU_SetRegion(
+    ARM_MPU_SetRegionEx(
+        2,
         ARM_MPU_RBAR(2, 0x20000000),
         ARM_MPU_RASR(1, ARM_MPU_AP_PRIV, ARM_MPU_ACCESS_ORDERED, 1, 0, 0, 0b00000000, ARM_MPU_REGION_SIZE_8KB)
     );
 
     // Flashprog [0x2000_2000, 0x2000_4000] RX
-    ARM_MPU_SetRegion(
+    ARM_MPU_SetRegionEx(
+        3,
         ARM_MPU_RBAR(3, 0x20002000),
         ARM_MPU_RASR(0, ARM_MPU_AP_PRO, ARM_MPU_ACCESS_ORDERED, 1, 0, 0, 0b00000000, ARM_MPU_REGION_SIZE_8KB)
     );
 
     // SRAM [0x2000_4000, 0x2000_8000] RW
-    ARM_MPU_SetRegion(
+    ARM_MPU_SetRegionEx(
+        4,
         ARM_MPU_RBAR(4, 0x20004000),
         ARM_MPU_RASR(1, ARM_MPU_AP_PRIV, ARM_MPU_ACCESS_ORDERED, 1, 0, 0, 0b00000000, ARM_MPU_REGION_SIZE_16KB)
     );
 
     // SRAM [0x2000_8000, 0x2001_0000] RW
-    ARM_MPU_SetRegion(
+    ARM_MPU_SetRegionEx(
+        5,
         ARM_MPU_RBAR(5, 0x20008000),
         ARM_MPU_RASR(1, ARM_MPU_AP_PRIV, ARM_MPU_ACCESS_ORDERED, 1, 0, 0, 0b00000000, ARM_MPU_REGION_SIZE_32KB)
     );
 
     // SRAM [0x2001_0000, 0x2002_0000] RW
-    ARM_MPU_SetRegion(
+    ARM_MPU_SetRegionEx(
+        6,
         ARM_MPU_RBAR(6, 0x20010000),
         ARM_MPU_RASR(1, ARM_MPU_AP_PRIV, ARM_MPU_ACCESS_ORDERED, 1, 0, 0, 0b00000000, ARM_MPU_REGION_SIZE_64KB)
     );
 
     // Peripherals [0x4000_0000, 0x6000_0000] RW
-    ARM_MPU_SetRegion(
+    ARM_MPU_SetRegionEx(
+        7,
         ARM_MPU_RBAR(7, 0x40000000),
         ARM_MPU_RASR(1, ARM_MPU_AP_PRIV, ARM_MPU_ACCESS_ORDERED, 1, 0, 0, 0b00000000, ARM_MPU_REGION_SIZE_512MB)
     );

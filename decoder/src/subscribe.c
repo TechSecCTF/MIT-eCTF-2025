@@ -11,7 +11,7 @@
 #include "decrypt.h"
 #include "verify.h"
 
-subscription_t * subscriptions[NUM_MAX_SUBSCRIPTIONS] = {
+const subscription_t * const subscriptions[NUM_MAX_SUBSCRIPTIONS] = {
     (subscription_t *)SUB1,
     (subscription_t *)SUB2,
     (subscription_t *)SUB3,
