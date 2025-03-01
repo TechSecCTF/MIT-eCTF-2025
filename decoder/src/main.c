@@ -152,7 +152,7 @@ int main(void) {
         // Parse the packet for a valid header.
         switch (packet.header.opcode) {
             case OPCODE_LIST:
-                list();
+                list(&packet);
                 continue;
             case OPCODE_SUBSCRIBE:
                 subscribe(&packet, read);

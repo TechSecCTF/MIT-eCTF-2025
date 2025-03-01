@@ -31,6 +31,6 @@ typedef union {
 
 #pragma pack(pop)
 
-void list(void);
+void list(packet_t * packet);
 
 #endif
