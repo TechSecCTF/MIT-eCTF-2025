@@ -5,13 +5,7 @@
 # For instructions on how to use this system, see
 # https://analog-devices-msdk.github.io/msdk/USERGUIDE/#build-system
 
-#MXC_OPTIMIZE_CFLAGS = -Og
-# ^ For example, you can uncomment this line to 
-# optimize the project for debugging
-
 # **********************************************************
-
-# Add your config here!
 
 # This example is only compatible with the FTHR board,
 # so we override the BOARD value to hard-set it.
@@ -29,12 +23,11 @@ LINKERFILE=firmware.ld
 STARTUPFILE=startup_firmware.S
 ENTRY=firmware_startup
 
-# ****************** Integration **************
-
+# ********** Integration with native KDF code **********
 PROJ_CFLAGS += -I./cryptosystem/src
 SRCS += ./cryptosystem/src/cryptosystem.c
 
-# ****************** wolfSSL *******************
+# ********************** wolfSSL ***********************
 VPATH += $(WOLFSSL_PATH)/wolfcrypt/src
 IPATH += $(WOLFSSL_PATH)
 
