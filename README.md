@@ -1,36 +1,54 @@
-# eCTF Insecure Example
+# MIT TechSec eCTF 2025 Satellite TV System
 
-This repository holds the insecure example design for an eCTF Satellite TV System.
+This repository holds the MIT TechSec design for an eCTF Satellite TV System.
+
+Please review our [design document](design_doc.pdf) for more details than the below summary.
+
+## Summary
+
+Our defenses consist of three main components:
+* Unique encryption keys for each timestamp in a given channel
+* Key derivation tree allowing subscriptions to provide just enough information to derive keys for the intended subscription window
+* Memory protection, disabling execution from rewritable regions of memory
+
+For the Decoder, we use [wolfCrypt](https://github.com/wolfSSL/wolfssl) for its SHA-2, AES-128-GCM, and Ed25519 functionality.
+
+For the Encoder, we use the Python standard library for SHA-2 and the [cryptography](https://cryptography.io) module for its AES-128-GCM and Ed25519 functionality.
 
 ## Layout
 
-- `decoder/` - Firmware for the television decoder.
-    - `project.mk` - This file defines project specific variables included in the Makefile
-    - `Makefile` - This makefile is invoked by the eCTF tools when creating a decoder.
-    - `Dockerfile` - Describes the build environment used by eCTF build tools.
-    - `inc/` - Directory with c header files
-    - `src/` - Directory with c source files
-    - `wolfssl/` - Location to place wolfssl library for included Crypto Example
-- `design/` - Host design elements
-    - `ectf25_design/` - Host design source code
-        - `encoder.py` - Encodes frames
-        - `gen_secrets.py` - Generates shared secrets
-        - `gen_subscription.py` - Generates subscription updates
-    - `pyproject.toml` - File that tells pip how to install this module
-- `frames/` - Example frame data
-- `tools/` - Host tools - DO NOT MODIFY ANYTHING IN THIS DIRECTORY
-    - `ectf25/` - Directory with tool source
-        - `tv/` - Sends received frames to the decoder
-            - `list.py` - Tool to list active decoder subscriptions
-            - `subscribe.py` - Tool to update decoder subscriptions
-        - `uplink/` - Encodes frames and sends them to satellite
-        - `utils/` - Host tool utilities
-            - `decoder.py` - Interface with decoder hardware/firmware. This file should not be directly executed.
-            - `flash.py` - Firmware update utility
-            - `stress_test.py` - Utility for testing decoder
-            - `tester.py` - Utility for testing decoder
-        - `satellite.py` - Broadcasts frames from uplink to all decoders
-    - `pyproject.toml` - File that tells pip how to install this module
+Below are files we authored or modified that anyone wishing to understand the
+design should review.
+
+```
+├── decoder
+│   ├── cryptosystem
+│   │   └── src
+│   │       ├── cryptosystem.c - Key derivation tree implementation
+│   │       └── main.c - Standalone test of key derivation tree
+│   ├── src
+│   │   ├── decode.c - Handles decode command, enforces SR3
+│   │   ├── decrypt.c - Helpers for decrypting subscribe/decode data
+│   │   ├── list_cmd.c - Handles list command
+│   │   ├── main.c - Initialization and command processing loop
+│   │   ├── messaging.c - Handles packet parsing and sending
+│   │   ├── subscribe.c - Handles subscribe command
+│   │   └── verify.c - Helpers for verifying subscribe/decode packets
+│   ├── inc/ - Headers correspsonding to source files in src/
+│   ├── Dockerfile - Build environment used by eCTF build tools
+│   ├── firmware.ld - Linker script for decoder firmware
+│   ├── gen_decoder_secrets.py - Generates secrets for decoder at compile time
+│   └── startup_firmware.S - Startup code for decoder firmware
+├── design
+│   └── ectf25_design
+│       ├── cryptosystem.py - Key derivation tree implementation, other helpers
+│       ├── encoder.py - Encodes frames
+│       ├── gen_secrets.py - Generates secrets for a deployment
+│       └── gen_subscription.py - Generates subscription updates
+└── tests/ - Various end-to-end tests for functional and security requirements
+```
+
+---
 
 ## Usage and Requirements
 

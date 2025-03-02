@@ -11,6 +11,7 @@ Copyright: Copyright (c) 2025 The MITRE Corporation
 """
 
 import argparse
+import ectf25_design.cryptosystem as cryptosystem
 import json
 from pathlib import Path
 
@@ -29,20 +30,15 @@ def gen_secrets(channels: list[int]) -> bytes:
 
     :returns: Contents of the secrets file
     """
-    # TODO: Update this function to generate any system-wide secrets needed by
-    #   your design
+    channels = [0] + channels
 
-    # Create the secrets object
-    # You can change this to generate any secret material
-    # The secrets file will never be shared with attackers
     secrets = {
         "channels": channels,
-        "some_secrets": "EXAMPLE",
+        "root_keys": { channel: cryptosystem.gen_root_key().hex() for channel in channels },
+        "shared_key_root": cryptosystem.gen_root_key().hex(),
+        "signing_key": cryptosystem.gen_ed25519_key().hex(),
     }
 
-    # NOTE: if you choose to use JSON for your file type, you will not be able to
-    # store binary data, and must either use a different file type or encode the
-    # binary data to hex, base64, or another type of ASCII-only encoding
     return json.dumps(secrets).encode()
 
 

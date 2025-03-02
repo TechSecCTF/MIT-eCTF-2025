@@ -113,7 +113,7 @@ __isr_vector:
     .long ADC_IRQHandler               /* 0x24  0x0090  36: ADC */
     .long RSV21_IRQHandler             /* 0x25  0x0094  37: Reserved */
     .long RSV22_IRQHandler             /* 0x26  0x0098  38: Reserved */
-    .long FLC0_IRQHandler              /* 0x27  0x009C  39: Flash Controller */
+    .long flash_simple_irq             /* 0x27  0x009C  39: Flash Controller */
     .long GPIO0_IRQHandler             /* 0x28  0x00A0  40: GPIO0 */
     .long GPIO1_IRQHandler             /* 0x29  0x00A4  41: GPIO1 */
     .long GPIO2_IRQHandler             /* 0x2A  0x00A8  42: GPIO2 (LP) */

@@ -1,13 +1,23 @@
+/**
+ * @file "subscribe.h"
+ * @author MIT TechSec
+ * @brief Channel subscription functions header
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 Massachusetts Institute of Technology
+ */
+
 #ifndef _SUBSCRIBE_H
 #define _SUBSCRIBE_H
 
 #include <stdint.h>
 #include "simple_flash.h"
 #include "messaging.h"
+#include "cryptosystem.h"
 
 #define NUM_MAX_SUBSCRIPTIONS 8
 
-#define SUB_FLASH_START 0x10036000
+#define SUB_FLASH_START 0x10042000
 #define SUB1 (SUB_FLASH_START + (0 * MXC_FLASH_PAGE_SIZE))
 #define SUB2 (SUB_FLASH_START + (1 * MXC_FLASH_PAGE_SIZE))
 #define SUB3 (SUB_FLASH_START + (2 * MXC_FLASH_PAGE_SIZE))
@@ -18,16 +28,6 @@
 #define SUB8 (SUB_FLASH_START + (7 * MXC_FLASH_PAGE_SIZE))
 
 #pragma pack(push, 1)
-
-typedef union {
-    struct {
-        uint32_t decoder_id;
-        uint64_t start;
-        uint64_t end;
-        uint32_t channel;
-    };
-    uint8_t rawBytes[BODY_LEN];
-} subscription_t;
 
 #pragma pack(pop)
 

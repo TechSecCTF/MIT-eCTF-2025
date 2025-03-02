@@ -1,3 +1,12 @@
+/**
+ * @file "messaging.c"
+ * @author MIT TechSec
+ * @brief Message reading and writing functions
+ * @date 2025
+ *
+ * @copyright Copyright (c) 2025 Massachusetts Institute of Technology
+ */
+
 #include "messaging.h"
 
 /** @brief Read a well-formed packet over UART.
@@ -12,12 +21,23 @@ int read_packet(packet_t * packet) {
 
     // Read the Header
     read += read_bytes(packet->rawBytes, sizeof(header_t));
-    
+
     // Read the Body
     if (packet->header.length <= BODY_LEN) {
         read += read_bytes(packet->body, packet->header.length);
         return read;
     }
+
+    // If we receive an unexpectedly large packet, just discard the bytes so that
+    // we can easily continue receiving packets. Mostly so a lack of this isn't
+    // construed as an attempt to lock out an attacker.
+    for (uint16_t i = 0; i < packet->header.length; i++) {
+        if (i && i % 256 == 0) {
+            send_ack();
+        }
+        uart_readbyte();
+    }
+    send_ack();
 
     memset(packet, 0, sizeof(packet_t));
     send_error();

@@ -18,7 +18,8 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     gcc-arm-none-eabi \
     binutils-arm-none-eabi \
     make \
-    python3.10 \
+    python3 \
+    python3-pip \
     git \
     wget \
     libtool \
@@ -32,6 +33,16 @@ RUN apt-get install -y unzip && \
     rm -f v2024_02.zip
 
 ENV MAXIM_PATH=/root/msdk-2024_02
+
+# Install wolfSSL
+RUN wget https://github.com/wolfSSL/wolfssl/archive/refs/tags/v5.7.6-stable.zip && \
+    unzip v5.7.6-stable.zip && \
+    rm -f v5.7.6-stable.zip
+
+ENV WOLFSSL_PATH=/root/wolfssl-5.7.6-stable
+
+# Install some Python packages for gen_decoder_secrets.py
+RUN python3 -m pip install --break-system-packages cryptography
 
 WORKDIR /decoder
 
