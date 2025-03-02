@@ -1,9 +1,9 @@
-### Decoder proof of concept
+### Decoder key-derivation system
 
-Included is a proof-of-concept wrapper for the decoder that was used during the testing process. 
-It can be used to test the C cryptosystem implementation separately from the firmware environment. 
-It is not relied upon in the final design and is provided "as-in" in the hope that it may be a useful starting point for testing. 
-Included is a `Makefile` to build a proof-of-concept executable, as well as a `tests.py` that interfaces with the python encoder implementation. 
+Included is the key-derivation functions for our Decoder.
+Additionally included is a proof-of-concept wrapper for the decoder that was used during the testing process. 
+It can be used to test the C cryptosystem implementation separately from the firmware environment.
+Included is a `Makefile` to build a proof-of-concept executable, as well as a `tests.py` that interfaces with the python encoder implementation.
 Below is a command session describing the usage: 
 
 ```bash
