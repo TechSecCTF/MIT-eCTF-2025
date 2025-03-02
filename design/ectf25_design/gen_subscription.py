@@ -41,9 +41,9 @@ def gen_subscription(
 
     signing_key = secrets.signing_key
 
-    shared_key = cryptosystem.hash(secrets.shared_key_root + struct.pack(">I", device_id))[
-        : cryptosystem.KEY_LEN
-    ]
+    shared_key = cryptosystem.hash(
+        secrets.shared_key_root + struct.pack(">I", device_id)
+    )[: cryptosystem.KEY_LEN]
 
     nonce = cryptosystem.get_nonce()
 
@@ -54,17 +54,16 @@ def gen_subscription(
         + 8  # Encrypted Update End
         + len(subscription)  # Encrypted Update Subscription
         + cryptosystem.AUTHTAG_LEN  # AuthTag
-        + cryptosystem.SIG_LEN # Signature
+        + cryptosystem.SIG_LEN  # Signature
     )
 
     header = b"%S" + struct.pack("<H", length)
     aad = header + struct.pack(f"<{cryptosystem.NONCE_LEN}s", nonce)
 
     subscription = struct.pack("<IQQ", channel, start, end) + subscription
-    subscription, tag = cryptosystem.encrypt(shared_key, nonce, subscription, aad)
+    enc_subscription, tag = cryptosystem.encrypt(shared_key, nonce, subscription, aad)
 
-    header = b"%S" + struct.pack("<H", length)
-    body = struct.pack(f"{cryptosystem.NONCE_LEN}s", nonce) + tag + subscription
+    body = struct.pack(f"{cryptosystem.NONCE_LEN}s", nonce) + tag + enc_subscription
     signature = cryptosystem.sign(signing_key, header + body)
 
     return body + signature
